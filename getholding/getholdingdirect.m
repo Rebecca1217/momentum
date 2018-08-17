@@ -17,9 +17,12 @@ num = floor((size(resTrading, 2) - 1 ) / groupNum);
 res = table2array(resTrading(:, 2:end));
 res = num2cell(res, 2);
 res = cellfun(@(o) labeldirect(o, num), res, 'UniformOutput', false);
-
 res = [resTrading.Date cell2mat(res)]; % add Date and convert it to table
 res = array2table(res, 'VariableName', resTrading.Properties.VariableNames);
+% 这个地方用rowfun能不能实现？ 感觉应该是可以的，但是试了一下不行。。
+% error msg: 未定义与 'function_handle' 类型的输入参数相对应的函数 'rowfun'。
+% 感觉是rowfun不支持function_handle类型。
+
 end
 
 

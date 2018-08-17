@@ -62,6 +62,8 @@ for iWin = 1:length(window) % 每个时间窗口
     posFullDirect = getfullholding(posTradingDirect, factorData.Date);
     % 因为后面的算法，逻辑是从因子数据的第一天开始换手，所以完整的持仓日期就是因子数据的日期
     
+    
+    
     %下面补全持仓手数和主力合约名称
     % 持仓手数和主力合约名称以两个表的形式保存吗？
     
