@@ -12,11 +12,10 @@ for iVar = 1 : size(varieties, 1)
     eval(str)
     iData = table(futureData.Date, iPrice, ...
         'VariableName', {'Date', varName});
-    iData = iData(iData.Date >= str2double(dateFrom) & ...
-        iData.Date <= str2double(dateTo), :);
-    res = outerjoin(res, iData, 'MergeKeys', true); 
-    % 这个地方其实想实现的是join(A, B) 以A为基础，把B join上来，如果A有的键B没有的话就返回空
-    % 但MATLAB要求B中必须包含A中所有的键，所以做了个这种，先把B截取成没有多余信息，再outerjoin
+%     iData = iData(iData.Date >= str2double(dateFrom) & ...
+%         iData.Date <= str2double(dateTo), :); % 加上type left以后就不用先截取iData了
+    res = outerjoin(res, iData, 'type', 'left', 'MergeKeys', true); 
+    % outerjoin会把join后的结果按照key排序
 end
 
 end
