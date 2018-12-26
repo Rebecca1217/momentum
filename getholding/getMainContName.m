@@ -1,7 +1,7 @@
 function targetPortfolio = getMainContName(posHands)
 %输入每日持仓方向和手数，输出每日持仓的主力合约名称
-
-%% 得到每天每个品种的主力合约代码
+% 
+% %% 得到每天每个品种的主力合约代码
 mainContTable = getmaincont();
 
 %% 和posFullDirect， posHands结合到一起
@@ -65,7 +65,15 @@ clear tmp tmp1 tmp2
 %% 2018.12.24之前写的版本：
 % 这里每天循环，太慢了。。想办法改进一下
 % 
-% % 添加合约
+% @2018.12.16比较速度改进前后BacktestAnalysis一样，但是targetPortfolio有出入
+% 手数一样，但是原先的写法，合约总是会提前换月，查找一下原因
+% 原因是：使用数据源不一样，原版用的是\\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码里面的主力合约数据；
+% 新版本用的是Z:\baseData\codeBet.mat里面的数据，这个比原版本推迟一天，相当于是真正持仓的合约。
+% \\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码 这里面保存的合约是自然时间，
+% 比如20号下午收盘后你知道了该换月了，这里保存的就是20号，实际持仓的话交易日21号才能持仓到新合约
+% Z:\baseData\codeBet.mat 里面保存的是持仓合约，比得知换月的自然时间滞后一天。
+
+% 添加合约
 % mainContPath = evalin('base', 'tradingPara.futMainContPath');
 % 
 % 
@@ -84,7 +92,11 @@ clear tmp tmp1 tmp2
 %     varietyPath = [usualPath, '\fut_variety.mat'];
 %     varieties = getallvarieties(varietyPath); % 得到所有品种名称，包括流动性差的
 %     varieties.VarietyName = cellfun(@(x)char(x), varieties.VarietyName, 'UniformOutput', false);
-%    
+%     % varieties 剔除股指和国债
+%     varieties.ValidLabel = arrayfun(@(x, y, z) ifelse(ismember(x, {'IC', 'IF', 'IH', 'T', 'TF', 'TS'}), 0, 1), varieties.VarietyName);
+%     validIdx = find(varieties.ValidLabel, height(varieties));
+%     varieties = varieties(validIdx, 1);
+%     
 %     res = outerjoin(varieties, mainCont, 'type', 'left', 'MergeKeys', true);
 %    
 %     res.MainCont = cellfun(@(x)char(x), res.MainCont, 'UniformOutput', false);

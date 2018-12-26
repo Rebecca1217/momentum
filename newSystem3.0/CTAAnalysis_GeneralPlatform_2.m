@@ -22,6 +22,10 @@ dd = nv(:,2)-cummax(nv(:,2));
 % dd由0变负，开始回撤；dd由负变0，结束回撤
 sgn = sign(dd);
 noDDLocs = find(sgn==0); %没有回撤的时间点所在行
+if noDDLocs == 1
+    noDDLocs = [noDDLocs; size(sgn, 1)];
+end
+% @2018.12.03如果一直回撤。。加上最后一行，不然analysis(7) 用到diff算不出数
 analysis(6) = -min(dd); %最大回撤
 analysis(7) = max(diff(noDDLocs)); %回撤最长持续时长
 analysis(8) = analysis(2)/analysis(3); %sr

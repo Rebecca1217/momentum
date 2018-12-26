@@ -79,8 +79,8 @@ for iWin = 1:length(window) % 每个时间窗口
     liquidityInfo = delStockBondIdx(liquidityInfo);
     
     liquidityInfo = table2array(liquidityInfo(:, 2:end));
-%     tic
     totalRes = num2cell(nan(13, tradingPara.passway + 1));
+   
     for jPassway = 1 : tradingPara.passway % 每条通道  比较不同通道下的结果
         win = window(iWin);
         passway = jPassway;
@@ -137,13 +137,16 @@ for iWin = 1:length(window) % 每个时间窗口
         end
         
     end
-%     toc
-% 修改getMainContName函数后，循环通道速度提升到10条通道只需要23秒
+   
+% 修改getMainContName函数后，循环通道速度从1条通道38秒提升到10条通道只需要23秒
 end
 
 
 
-
+result = nan(size(targetPortfolio, 1), 1);
+for i = 1 : size(targetPortfolio, 1)
+    result(i) = isequal(targetPortfolio{i, 1}, targetPortfolio1{i, 1});
+end
 
 
 
