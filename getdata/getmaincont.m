@@ -14,7 +14,8 @@ codename = table(code, name, 'VariableNames', {'ContCode', 'ContName'});
 %% 获取每天的code
 load([contPath, '\TableData\futureData\TableData.mat'])
 res = table(TableData.date, TableData.code, TableData.volume, TableData.mainCont, ...
-    'VariableNames', {'Date', 'ContCode', 'Volume', 'MainCont'});
+    TableData.close, TableData.multifactor, ...
+    'VariableNames', {'Date', 'ContCode', 'Volume', 'MainCont', 'Close', 'MultiFactor'});
 
 %% match到每天的contname
 res = outerjoin(res, codename, 'type', 'left', 'MergeKeys', true);
