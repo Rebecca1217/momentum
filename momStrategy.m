@@ -19,11 +19,13 @@ factorPara.dateFrom = 20100101; % ÕûÀíµÄÊý¾Ý´ÓÕâÊ±ºò¿ªÊ¼
 factorPara.dateTo = 20170831; % ÍÆ³öÒ¹ÅÌ½»Ò×Ç°
 factorPara.priceType = 'Settle';  % º£Í¨ÊÇ¸´È¨ÊÕÅÌ·¢ÐÅºÅ£¬Ö÷Á¦½áËã½»Ò×£»»ªÌ©ÊÇ¸´È¨½áËã·¢ÐÅºÅ£¬Ö÷Á¦½áËã½»Ò×
 
-window = [5:5:50 22 60 120 250]; % ¼ÆËã¶¯Á¿µÄÊ±¼ä´°¿Ú
+% window = [5:5:50 22 60 120 250]; % ¼ÆËã¶¯Á¿µÄÊ±¼ä´°¿Ú
+% window = [5 10 22 60 120 250]; % »ªÌ©²âÊÔµÄ¶¯Á¿Ê±¼ä´°¿Ú % ¸Ð¾õ250Õâ¸ö¸ù±¾Ã»ÓÐÈÎºÎµÀÀí£¬×Ê½ðÆ½¾ù·Ö³É250·ÝÒ»Ìì½øÒ»·ÝÁ¬1ÊÖ¶¼Âò²»ÁË¡£¡£
+% holdingTime = [5 10 22 60 120 250];
+window = 5:5:30;
+holdingTime = 5:5:15;
 
-tradingPara.holdingTime = 10; % µ÷²Ö¼ä¸ô£¨³Ö²ÖÈÕÆÚ£©
-tradingPara.passway = tradingPara.holdingTime;
-tradingPara.groupNum = 10; % ¶Ô³å±ÈÀý10%£¬20%¶ÔÓ¦5×é
+tradingPara.groupNum = 5; % ¶Ô³å±ÈÀý10%£¬20%¶ÔÓ¦5×é
 tradingPara.capital = 10000000;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\ÆÚ»õÊý¾Ý2.0\usualData\minTickInfo.mat'; %ÆÚ»õ×îÐ¡±ä¶¯µ¥Î»
 tradingPara.futMainContPath = '\\Cj-lmxue-dt\ÆÚ»õÊý¾Ý2.0\ÉÌÆ·ÆÚ»õÖ÷Á¦ºÏÔ¼´úÂë';
@@ -31,7 +33,7 @@ tradingPara.futDataPath = '\\Cj-lmxue-dt\ÆÚ»õÊý¾Ý2.0\dlyData\Ö÷Á¦ºÏÔ¼'; %ÆÚ»õÖ÷Á
 tradingPara.futUnitPath = '\\Cj-lmxue-dt\ÆÚ»õÊý¾Ý2.0\usualData\minTickInfo.mat'; %ÆÚ»õ×îÐ¡±ä¶¯µ¥Î»
 tradingPara.futMultiPath = '\\Cj-lmxue-dt\ÆÚ»õÊý¾Ý2.0\usualData\PunitInfo'; %ÆÚ»õºÏÔ¼³ËÊý
 tradingPara.PType = 'open'; %½»Ò×¼Û¸ñ£¬Ò»°ãÓÃopen£¨¿ªÅÌ¼Û£©»òÕßavg(ÈÕ¾ù¼Û£©
-tradingPara.fixC = 0.0005; %¹Ì¶¨³É±¾ »ªÌ©ÊÇµ¥±ßÍòÎå£¬º£Í¨µ¥±ßÍòÈý
+tradingPara.fixC = 0.0003; %¹Ì¶¨³É±¾ »ªÌ©ÊÇµ¥±ßÍòÎå£¬º£Í¨µ¥±ßÍòÈý
 tradingPara.slip = 0; %»¬µã Á½¼ÒÈ¯ÉÌ¶¼²»¼Ó»¬µã
 
 %
@@ -62,131 +64,146 @@ tradingPara.slip = 0; %»¬µã Á½¼ÒÈ¯ÉÌ¶¼²»¼Ó»¬µã
 % ºÍÒò×ÓÊý¾Ýµã³ËµÄÊ±ºòÓÃµÄÊÇ²»º¬DateºÍÁÐÃûµÄmatrix
 
 factorName = 'momFactorData';
+bcktstAnalysis = num2cell(nan(13, length(window) * length(holdingTime) + 1));
 for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
-    load([factorDataPath, factorName, '\window', num2str(window(iWin)), '.mat']);
-    %% Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚÒ»£ºÈÕÆÚ
-    factorData = factorData(factorData.Date >= factorPara.dateFrom & ...
-        factorData.Date <= factorPara.dateTo, :);
-    % Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚ¶þ£ºÁ÷¶¯ÐÔ
-    %     Ã¿´ÎÑ­»·µÄliquidityInfoÊ±¼ä²»Ò»Ñù£¬ÓëfactorDataµÄÊ±¼ä±£³ÖÒ»ÖÂ
-    load('E:\futureData\liquidityInfo.mat')
-    liquidityInfo = liquidityInfo(...
-        liquidityInfo.Date >= min(factorData.Date) &...
-        liquidityInfo.Date <= max(factorData.Date), :);   
-    % @2018.12.24 liquidityInfoÒ²ÒªÌÞ³ý¹ÉÖ¸ºÍ¹úÕ®ÆÚ»õ
-    % Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚÈý£º´¿ÉÌÆ·²¿·Ö
-    liquidityInfo = delStockBondIdx(liquidityInfo);  
-    liquidityInfo = table2array(liquidityInfo(:, 2:end));
-    
-    %% ¶¨Òå»Ø²â»ã×Ü½á¹û
-    totalRes = num2cell(nan(13, tradingPara.passway + 1));
-    totalBacktestNV = nan(size(factorData, 1), tradingPara.passway + 1);
-    totalBacktestExposure = nan(size(factorData, 1), tradingPara.passway + 1);
-    %     »Ø²â³ýµÚÒ»ÌõÍ¨µÀÍâ£¬ºóÃæµÄÈÕÆÚ»áÈ±Ê§Ò»Ð©£¬ÐèÒª²¹Æë
-    
-    totalBacktestNV(:, 1) = factorData.Date;
-    totalBacktestExposure(:, 1) = factorData.Date;
-    
-    %     totalBacktestNV = table(factorData.Date, 'VariableNames', {'Date'});
-    %     totalBacktestExposure = totalBacktestNV;
-    % @2018.12.26 ²»Í¬Í¨µÀ½á¹û½áºÏ£¬ÓÃintersect»¹ÊÇ±ÈouterjoinÂÔ¿ìÒ»µã
-    % 10ÌõÍ¨µÀµÄ»°£¬intersect 22.78Ãë£¬outerjoin 23.08Ãë£¬ËùÒÔ»¹ÊÇÓÃintersect×ö
-    %% Ã¿ÌõÍ¨µÀÑ­»·²âÊÔ
-    for jPassway = 1 : tradingPara.passway % Ã¿ÌõÍ¨µÀ  ±È½Ï²»Í¬Í¨µÀÏÂµÄ½á¹û
-        win = window(iWin);
-        passway = jPassway;
-        posTradingDirect = getholding(win, passway); %µÃµ½iWinºÍjPasswayÏÂµÄ»»²ÖÈÕÐòÁÐ³Ö²Ö·½Ïò
-        % Õâ¸öµØ·½ÓÐ¸öÇ±ÔÚÊÇÎÊÌâ£º³Ö²Ö¾ØÕóÀïÃæµÄ0°üº¬ÁËÈ±Ê§Êý¾ÝNaNºÍ´¦ÓÚÖÐ¼äÎ»ÖÃ²»¶à²»¿ÕÁ½ÖÖÇé¿ö
-        % ÏÖÔÚÒòÎª²»¹ÜÊÇÄÄÖÖÇé¿ö£¬²»³Ö²ÖËüÃÇÏÈ²»ÓÃ¹Ü£¬ºóÆÚÈç¹ûÐèÒªµÄ»°ÔÙ¼ÓÒÔÇø·Ö£¨ÔÝÊ±Ïë²»µ½Ê²Ã´Çé¿öÊÇÐèÒªÇø·ÖµÄ£¿£©
+    for kHolding = 1:length(holdingTime)
         
-        % Ð´Ò»¸öÏòÏÂ²¹È«µÄº¯Êý£¬ÊäÈë»»²ÖÈÕµÄ³Ö²ÖºÍÄ¿±êÈÕÆÚÐòÁÐ£¬µÚÒ»¸ö»»²ÖÈÕÖ®Ç°µÄ²»¹Ü£¬ÏÂÃæµÄ²¹Æë
-        %         posFullDirect = getfullholding(posTradingDirect, factorData.Date);
-        % ÒòÎªºóÃæµÄËã·¨£¬Âß¼­ÊÇ´ÓÒò×ÓÊý¾ÝµÄµÚÒ»Ìì¿ªÊ¼»»ÊÖ£¬ËùÒÔÍêÕûµÄ³Ö²ÖÈÕÆÚ¾ÍÊÇÒò×ÓÊý¾ÝµÄÈÕÆÚ
-        % @2018.12.21¸üÐÂÁËMATLABÒÔºó¿ÉÒÔÓÃfillmissingÁË
+        tradingPara.holdingTime = holdingTime(kHolding); % µ÷²Ö¼ä¸ô£¨³Ö²ÖÈÕÆÚ£©
+        tradingPara.passway = tradingPara.holdingTime;
+        load([factorDataPath, factorName, '\window', num2str(window(iWin)), '.mat']);
+        %% Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚÒ»£ºÈÕÆÚ
+        factorData = factorData(factorData.Date >= factorPara.dateFrom & ...
+            factorData.Date <= factorPara.dateTo, :);
+        % Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚ¶þ£ºÁ÷¶¯ÐÔ
+        %     Ã¿´ÎÑ­»·µÄliquidityInfoÊ±¼ä²»Ò»Ñù£¬ÓëfactorDataµÄÊ±¼ä±£³ÖÒ»ÖÂ
+        load('E:\futureData\liquidityInfoHuatai.mat')
+        liquidityInfo = liquidityInfoHuatai;
+        liquidityInfo = liquidityInfo(...
+            liquidityInfo.Date >= min(factorData.Date) &...
+            liquidityInfo.Date <= max(factorData.Date), :);
+        % @2018.12.24 liquidityInfoÒ²ÒªÌÞ³ý¹ÉÖ¸ºÍ¹úÕ®ÆÚ»õ
+        % Òò×ÓÊý¾ÝÉ¸Ñ¡£ºµÚÈý£º´¿ÉÌÆ·²¿·Ö
+        liquidityInfo = delStockBondIdx(liquidityInfo);
+        liquidityInfo = table2array(liquidityInfo(:, 2:end)); %% ÕâÒ»²½ÆäÊµ²»ÓÃ£¬ÒòÎªHuatai°æ±¾ÒÑ¾­ÌÞ³ýÁË¹ÉÖ¸ºÍ¹úÕ®ÆÚ»õ
         
-        posFullDirect = factorData(:, 1);
-        posFullDirect = outerjoin(posFullDirect, posTradingDirect, 'type', 'left', 'MergeKeys', true);
-        posFullDirect = varfun(@(x) fillmissing(x, 'previous'), posFullDirect);
-        posFullDirect.Properties.VariableNames = posTradingDirect.Properties.VariableNames;
+        %% ¶¨Òå»Ø²â»ã×Ü½á¹û
+        totalRes = num2cell(nan(13, tradingPara.passway + 1));
+        totalBacktestNV = nan(size(factorData, 1), tradingPara.passway + 1);
+        totalBacktestExposure = nan(size(factorData, 1), tradingPara.passway + 1);
+        %     »Ø²â³ýµÚÒ»ÌõÍ¨µÀÍâ£¬ºóÃæµÄÈÕÆÚ»áÈ±Ê§Ò»Ð©£¬ÐèÒª²¹Æë
         
-        % posFullDirectÈ«ÎªNaNÌÞ³ý
-        %         tst = rowfun(@(x) ~all(isnan(x)), posFullDirect(:, 2:end)); % Õâ¸ö²»ÐÐ
-        % ÒòÎªrowfun²»ÊÇ°ÑtableµÄÃ¿Ò»ÐÐ×÷ÎªÒ»¸övectorÒ»ÏÂ×ÓÊäÈëº¯Êý£¬¶øÊÇÃ¿ÐÐµÄÃ¿¸öÔªËØÒ»¸öÒ»¸öÊä½øÈ¥£¬
-        % ËùÒÔÕâÃ´²Ù×÷»áÒ»Ö±ÌáÊ¾ÊäÈëµÄ²ÎÊý¹ý¶à£¬Ïàµ±ÓÚÄãÔÚÊäÈëisnan(1,2,3,4)¶ø²»ÊÇisnan([1 2 3 4])
-        % º¯Êý¶¨ÒåÖ»ÓÐÒ»¸ö²ÎÊýx£¬¶øÄãÊäÈëÁË2:end¸ö²ÎÊý
-        % ¶øvarfunÈ·ÊÇÃ¿ÁÐ×÷ÎªÒ»¸övectorÒ»´ÎÐÔÊäÈëµÄ£¡¿Ó
-        %         tst = arrayfun(@(x) ~all(isnan(table2array(posFullDirect(x,
-        %         2:end)))), 1 : size(posFullDirect)); % Õâ¸ö¿ÉÒÔµ«Ì«Âý
-        nonNaN = sum(~isnan(table2array(posFullDirect(:, 2:end))), 2);
-        nonNaN = nonNaN ~= 0;
-        posFullDirect = posFullDirect(nonNaN, :); % ÕâÑù²Ù×÷ËäÈ»´úÂë·±ËöÒ»µã£¬µ«ËÙ¶È¿ì£¬²»ÐèÒªÓÃarrayfunÕâÖÖ±¾ÖÊÑ­»·µÄ¶«Î÷
-        % ÏÂÃæ²¹È«³Ö²ÖÊÖÊýºÍÖ÷Á¦ºÏÔ¼Ãû³Æ
-        % ³Ö²ÖÊÖÊýºÍÖ÷Á¦ºÏÔ¼Ãû³ÆÒÔÁ½¸ö±íµÄÐÎÊ½±£´æÂð£¿
-        % ³Ö²ÖÊÖÊý = (Í¶Èë±¾½ð/³Ö²ÖÆ·ÖÖÊý)/(ºÏÔ¼³ËÊý/ * ¼Û¸ñ) Æ½¾ù·ÖÅä±¾½ð
-        % ÊÖÊý¾­¹ý×îÐ¡±ä¶¯µ¥Î»ÏòÏÂµ÷Õû
-        posHands = getholdinghands(posTradingDirect, posFullDirect, tradingPara.capital / tradingPara.passway);
+        totalBacktestNV(:, 1) = factorData.Date;
+        totalBacktestExposure(:, 1) = factorData.Date;
         
-        targetPortfolio = getMainContName(posHands);
-        
-        % targetPortfolioÐèÒª×öÒ»¸öµ÷Õû£º
-        % ´ÓÊ¼ÖÁÖÕ´ÓÀ´Ã»ÓÐ±»Ñ¡ÖÐ¹ýµÄÆ·ÖÖÒªÌßµô¡£¡££¨²»È»»Ø²âÊ±ÊÇÒ»¸öÒ»¸öÆ·ÖÖ²âµÄ£¬²âµ½Õâ¸öÆ·ÖÖÃ»·¨Åª¡£¡££©
-        % ²»Òª¸Ä»Ø²âÆ½Ì¨£¬µ÷Õû×Ô¼ºÊäÈëµÄtargetPortfolio·ûºÏ»Ø²âÆ½Ì¨µÄÒªÇó£¨ÒòÎªÆ½Ì¨²»ÊÇ×Ô¼ºÐ´µÄ£¬ÎªÁË±£³ÖÒ»ÖÂ£©
-        
-        [BacktestResult,err] = CTABacktest_GeneralPlatform_3(targetPortfolio,tradingPara);
-        %         figure
-        %         % ¾»ÖµÇúÏß
-        %         dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
-        %         plot(dn, (tradingPara.capital + BacktestResult.nv(:, 2)) ./ tradingPara.capital)
-        %         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
-        
-        BacktestAnalysis = CTAAnalysis_GeneralPlatform_2(BacktestResult);
-        if jPassway == 1
-            totalRes(:, [1 2]) = BacktestAnalysis;
-        else
-            totalRes(:, jPassway + 1) = BacktestAnalysis(:, 2);
+        %     totalBacktestNV = table(factorData.Date, 'VariableNames', {'Date'});
+        %     totalBacktestExposure = totalBacktestNV;
+        % @2018.12.26 ²»Í¬Í¨µÀ½á¹û½áºÏ£¬ÓÃintersect»¹ÊÇ±ÈouterjoinÂÔ¿ìÒ»µã
+        % 10ÌõÍ¨µÀµÄ»°£¬intersect 22.78Ãë£¬outerjoin 23.08Ãë£¬ËùÒÔ»¹ÊÇÓÃintersect×ö
+        %% Ã¿ÌõÍ¨µÀÑ­»·²âÊÔ
+        for jPassway = 1 : tradingPara.passway % Ã¿ÌõÍ¨µÀ  ±È½Ï²»Í¬Í¨µÀÏÂµÄ½á¹û
+            win = window(iWin);
+            passway = jPassway;
+            posTradingDirect = getholding(passway); %µÃµ½iWinºÍjPasswayÏÂµÄ»»²ÖÈÕÐòÁÐ³Ö²Ö·½Ïò
+            % Õâ¸öµØ·½ÓÐ¸öÇ±ÔÚÊÇÎÊÌâ£º³Ö²Ö¾ØÕóÀïÃæµÄ0°üº¬ÁËÈ±Ê§Êý¾ÝNaNºÍ´¦ÓÚÖÐ¼äÎ»ÖÃ²»¶à²»¿ÕÁ½ÖÖÇé¿ö
+            % ÏÖÔÚÒòÎª²»¹ÜÊÇÄÄÖÖÇé¿ö£¬²»³Ö²ÖËüÃÇÏÈ²»ÓÃ¹Ü£¬ºóÆÚÈç¹ûÐèÒªµÄ»°ÔÙ¼ÓÒÔÇø·Ö£¨ÔÝÊ±Ïë²»µ½Ê²Ã´Çé¿öÊÇÐèÒªÇø·ÖµÄ£¿£©
+            
+            % Ð´Ò»¸öÏòÏÂ²¹È«µÄº¯Êý£¬ÊäÈë»»²ÖÈÕµÄ³Ö²ÖºÍÄ¿±êÈÕÆÚÐòÁÐ£¬µÚÒ»¸ö»»²ÖÈÕÖ®Ç°µÄ²»¹Ü£¬ÏÂÃæµÄ²¹Æë
+            %         posFullDirect = getfullholding(posTradingDirect, factorData.Date);
+            % ÒòÎªºóÃæµÄËã·¨£¬Âß¼­ÊÇ´ÓÒò×ÓÊý¾ÝµÄµÚÒ»Ìì¿ªÊ¼»»ÊÖ£¬ËùÒÔÍêÕûµÄ³Ö²ÖÈÕÆÚ¾ÍÊÇÒò×ÓÊý¾ÝµÄÈÕÆÚ
+            % @2018.12.21¸üÐÂÁËMATLABÒÔºó¿ÉÒÔÓÃfillmissingÁË
+            
+            posFullDirect = factorData(:, 1);
+            posFullDirect = outerjoin(posFullDirect, posTradingDirect, 'type', 'left', 'MergeKeys', true);
+            posFullDirect = varfun(@(x) fillmissing(x, 'previous'), posFullDirect);
+            posFullDirect.Properties.VariableNames = posTradingDirect.Properties.VariableNames;
+            
+            % posFullDirectÈ«ÎªNaNÌÞ³ý
+            %         tst = rowfun(@(x) ~all(isnan(x)), posFullDirect(:, 2:end)); % Õâ¸ö²»ÐÐ
+            % ÒòÎªrowfun²»ÊÇ°ÑtableµÄÃ¿Ò»ÐÐ×÷ÎªÒ»¸övectorÒ»ÏÂ×ÓÊäÈëº¯Êý£¬¶øÊÇÃ¿ÐÐµÄÃ¿¸öÔªËØÒ»¸öÒ»¸öÊä½øÈ¥£¬
+            % ËùÒÔÕâÃ´²Ù×÷»áÒ»Ö±ÌáÊ¾ÊäÈëµÄ²ÎÊý¹ý¶à£¬Ïàµ±ÓÚÄãÔÚÊäÈëisnan(1,2,3,4)¶ø²»ÊÇisnan([1 2 3 4])
+            % º¯Êý¶¨ÒåÖ»ÓÐÒ»¸ö²ÎÊýx£¬¶øÄãÊäÈëÁË2:end¸ö²ÎÊý
+            % ¶øvarfunÈ·ÊÇÃ¿ÁÐ×÷ÎªÒ»¸övectorÒ»´ÎÐÔÊäÈëµÄ£¡¿Ó
+            %         tst = arrayfun(@(x) ~all(isnan(table2array(posFullDirect(x,
+            %         2:end)))), 1 : size(posFullDirect)); % Õâ¸ö¿ÉÒÔµ«Ì«Âý
+            nonNaN = sum(~isnan(table2array(posFullDirect(:, 2:end))), 2);
+            nonNaN = nonNaN ~= 0;
+            posFullDirect = posFullDirect(nonNaN, :); % ÕâÑù²Ù×÷ËäÈ»´úÂë·±ËöÒ»µã£¬µ«ËÙ¶È¿ì£¬²»ÐèÒªÓÃarrayfunÕâÖÖ±¾ÖÊÑ­»·µÄ¶«Î÷
+            % ÏÂÃæ²¹È«³Ö²ÖÊÖÊýºÍÖ÷Á¦ºÏÔ¼Ãû³Æ
+            % ³Ö²ÖÊÖÊýºÍÖ÷Á¦ºÏÔ¼Ãû³ÆÒÔÁ½¸ö±íµÄÐÎÊ½±£´æÂð£¿
+            % ³Ö²ÖÊÖÊý = (Í¶Èë±¾½ð/³Ö²ÖÆ·ÖÖÊý)/(ºÏÔ¼³ËÊý/ * ¼Û¸ñ) Æ½¾ù·ÖÅä±¾½ð
+            % ÊÖÊý¾­¹ý×îÐ¡±ä¶¯µ¥Î»ÏòÏÂµ÷Õû
+            posHands = getholdinghands(posTradingDirect, posFullDirect, tradingPara.capital / tradingPara.passway);
+            
+            targetPortfolio = getMainContName(posHands);
+            
+            % targetPortfolioÐèÒª×öÒ»¸öµ÷Õû£º
+            % ´ÓÊ¼ÖÁÖÕ´ÓÀ´Ã»ÓÐ±»Ñ¡ÖÐ¹ýµÄÆ·ÖÖÒªÌßµô¡£¡££¨²»È»»Ø²âÊ±ÊÇÒ»¸öÒ»¸öÆ·ÖÖ²âµÄ£¬²âµ½Õâ¸öÆ·ÖÖÃ»·¨Åª¡£¡££©
+            % ²»Òª¸Ä»Ø²âÆ½Ì¨£¬µ÷Õû×Ô¼ºÊäÈëµÄtargetPortfolio·ûºÏ»Ø²âÆ½Ì¨µÄÒªÇó£¨ÒòÎªÆ½Ì¨²»ÊÇ×Ô¼ºÐ´µÄ£¬ÎªÁË±£³ÖÒ»ÖÂ£©
+            
+            [BacktestResult,err] = CTABacktest_GeneralPlatform_3(targetPortfolio,tradingPara);
+            %         figure
+            %         % ¾»ÖµÇúÏß
+            %         dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
+            %         plot(dn, (tradingPara.capital + BacktestResult.nv(:, 2)) ./ tradingPara.capital)
+            %         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
+            
+            BacktestAnalysis = CTAAnalysis_GeneralPlatform_2(BacktestResult);
+            if jPassway == 1
+                totalRes(:, [1 2]) = BacktestAnalysis;
+            else
+                totalRes(:, jPassway + 1) = BacktestAnalysis(:, 2);
+            end
+            % ²»Í¬½ø³¡Ê±¼ä£¨Í¨µÀ£©½á¹û²îÒìºÜ´ó£¬ËùÒÔÐèÒªÆ½¾ù£¬ÌÞ³ý½ø³¡Ê±¼äÓ°Ïì½á¹û²ÅÎÈ¶¨
+            %         dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
+            %         plot(dn, (tradingPara.capital + BacktestResult.nv(:, 2)) ./ tradingPara.capital)
+            %         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
+            %         hold on
+            
+            % ²¹È«»Ø²â¾»ÖµÐòÁÐ
+            
+            [~, idx0, ~] = intersect(totalBacktestNV(:, 1), BacktestResult.nv(:, 1));
+            totalBacktestNV(idx0, jPassway + 1) = BacktestResult.nv(:, 2);
+            totalBacktestExposure(idx0, jPassway + 1) = BacktestResult.riskExposure(:, 2);
+            % ÏÂÃæ¼¸ÐÐÊÇÓÃouterjoin×ö½á¹û»ã×Ü£º
+            %         totalBacktestNV = outerjoin(totalBacktestNV, array2table(BacktestResult.nv(:, 1:2), 'VariableNames', {'Date', 'NV'}), ...
+            %             'type', 'left', 'mergekeys', true);
+            %         totalBacktestNV.Properties.VariableNames{jPassway + 1} = ['NV', num2str(jPassway)];
+            %         totalBacktestExposure = outerjoin(totalBacktestExposure, array2table(BacktestResult.riskExposure(:, 1:2), 'VariableNames', {'Date', 'Exposure'}), ...
+            %             'type', 'left', 'mergekeys', true);
+            %         totalBacktestExposure.Properties.VariableNames{jPassway + 1} = ['Exposure', num2str(jPassway)];
+            
         end
-        % ²»Í¬½ø³¡Ê±¼ä£¨Í¨µÀ£©½á¹û²îÒìºÜ´ó£¬ËùÒÔÐèÒªÆ½¾ù£¬ÌÞ³ý½ø³¡Ê±¼äÓ°Ïì½á¹û²ÅÎÈ¶¨
-        %         dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
-        %         plot(dn, (tradingPara.capital + BacktestResult.nv(:, 2)) ./ tradingPara.capital)
-        %         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
-        %         hold on
         
-        % ²¹È«»Ø²â¾»ÖµÐòÁÐ
+        % ÐÞ¸ÄgetMainContNameº¯Êýºó£¬Ñ­»·Í¨µÀËÙ¶È´Ó1ÌõÍ¨µÀ38ÃëÌáÉýµ½10ÌõÍ¨µÀÖ»ÐèÒª23Ãë
         
-        [~, idx0, ~] = intersect(totalBacktestNV(:, 1), BacktestResult.nv(:, 1));
-        totalBacktestNV(idx0, jPassway + 1) = BacktestResult.nv(:, 2);
-        totalBacktestExposure(idx0, jPassway + 1) = BacktestResult.riskExposure(:, 2);
-        % ÏÂÃæ¼¸ÐÐÊÇÓÃouterjoin×ö½á¹û»ã×Ü£º
-        %         totalBacktestNV = outerjoin(totalBacktestNV, array2table(BacktestResult.nv(:, 1:2), 'VariableNames', {'Date', 'NV'}), ...
-        %             'type', 'left', 'mergekeys', true);
-        %         totalBacktestNV.Properties.VariableNames{jPassway + 1} = ['NV', num2str(jPassway)];
-        %         totalBacktestExposure = outerjoin(totalBacktestExposure, array2table(BacktestResult.riskExposure(:, 1:2), 'VariableNames', {'Date', 'Exposure'}), ...
-        %             'type', 'left', 'mergekeys', true);
-        %         totalBacktestExposure.Properties.VariableNames{jPassway + 1} = ['Exposure', num2str(jPassway)];
-          
+        %% tradingPara.passwayÌõÍ¨µÀµÄ½á¹û½áºÏ£º
+        % Ê×ÏÈÕâÀïÃ»ÓÐfill previous NaN£¬ÒòÎªÄ¬ÈÏºóÃæ²»»á³öÏÖNaN£¬NaN¶¼ÊÇÓÉÓÚpasswayÔÚÒ»¿ªÊ¼Ôì³É
+        % ÏÈ°ÑNaN²¹0  % ExposureÕâ¸öÃ»ÓÐÓÃ£¬»Ø²âÆ½Ì¨Àï¼ÆËãÓÐÎÊÌâ£¬ÕâÀïÖ»ÊÇÎªÁËÄÜ¹»ÅÜÍ¨Ç¿ÐÐ¼ÓÉÏ
+        totalBacktestNV = arrayfun(@(x, y, z) ifelse(isnan(x), 0, x), totalBacktestNV);
+        totalBacktestExposure = arrayfun(@(x, y, z) ifelse(isnan(x), 0, x), totalBacktestExposure);
+        
+        % ¼Ó×Ü
+        totalBacktestNV(:, tradingPara.passway + 2) = sum(totalBacktestNV(:, 2:end), 2);
+        totalBacktestExposure(:, tradingPara.passway + 2) = sum(totalBacktestExposure(:, 2:end), 2);
+        
+        totalBacktestResult.nv = totalBacktestNV(:, [1 end]);
+        totalBacktestResult.nv(:, 3) = [0; diff(totalBacktestResult.nv(:, 2))];
+        totalBacktestResult.riskExposure = totalBacktestExposure(:, [1 end]);
+        
+        totalBacktestAnalysis = CTAAnalysis_GeneralPlatform_2(totalBacktestResult);
+        
+        dn = datenum(num2str(totalBacktestResult.nv(:, 1)), 'yyyymmdd');
+        plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital)
+        datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
+        hold on
+        if iWin == 1 && kHolding == 1
+            bcktstAnalysis(:, [1 2]) = totalBacktestAnalysis;
+        else
+            bcktstAnalysis(:, (iWin - 1) * length(holdingTime) + kHolding + 1) = ...
+                totalBacktestAnalysis(:, 2);
+        end
+        
     end
-    
-    % ÐÞ¸ÄgetMainContNameº¯Êýºó£¬Ñ­»·Í¨µÀËÙ¶È´Ó1ÌõÍ¨µÀ38ÃëÌáÉýµ½10ÌõÍ¨µÀÖ»ÐèÒª23Ãë
-    
-    %% tradingPara.passwayÌõÍ¨µÀµÄ½á¹û½áºÏ£º
-    % Ê×ÏÈÕâÀïÃ»ÓÐfill previous NaN£¬ÒòÎªÄ¬ÈÏºóÃæ²»»á³öÏÖNaN£¬NaN¶¼ÊÇÓÉÓÚpasswayÔÚÒ»¿ªÊ¼Ôì³É
-    % ÏÈ°ÑNaN²¹0  % ExposureÕâ¸öÃ»ÓÐÓÃ£¬»Ø²âÆ½Ì¨Àï¼ÆËãÓÐÎÊÌâ£¬ÕâÀïÖ»ÊÇÎªÁËÄÜ¹»ÅÜÍ¨Ç¿ÐÐ¼ÓÉÏ
-    totalBacktestNV = arrayfun(@(x, y, z) ifelse(isnan(x), 0, x), totalBacktestNV);
-    totalBacktestExposure = arrayfun(@(x, y, z) ifelse(isnan(x), 0, x), totalBacktestExposure);
-    
-    % ¼Ó×Ü    
-    totalBacktestNV(:, tradingPara.passway + 2) = sum(totalBacktestNV(:, 2:end), 2);
-    totalBacktestExposure(:, tradingPara.passway + 2) = sum(totalBacktestExposure(:, 2:end), 2);
-    
-    totalBacktestResult.nv = totalBacktestNV(:, [1 end]);
-    totalBacktestResult.nv(:, 3) = [0; diff(totalBacktestResult.nv(:, 2))];
-    totalBacktestResult.riskExposure = totalBacktestExposure(:, [1 end]);
-    
-    totalBacktestAnalysis = CTAAnalysis_GeneralPlatform_2(totalBacktestResult);
-    
-    dn = datenum(num2str(totalBacktestResult.nv(:, 1)), 'yyyymmdd');
-    plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital)
-    datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
 end
 
 

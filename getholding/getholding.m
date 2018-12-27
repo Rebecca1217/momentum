@@ -1,4 +1,4 @@
-function res = getholding(win, passway)
+function res = getholding(passway)
 %得到每期持仓品种和方向
 % 先得到换仓日的，然后填充到中间的每天得到完整的持仓品种和方向，
 % 之后再考虑手数和合约名字的问题
@@ -9,6 +9,11 @@ liquidityInfo = evalin('base', 'liquidityInfo');
 % 这里factorData因子数据是缺失第一个时间窗口的；liquidityInfo是from-to全部时间的
 res = table2array(factorData(:, 2:end)) .* liquidityInfo; % 忽略Warn，factorData是load出来的
 res = [factorData.Date, res]; % 流动性品种的每日因子数据
+
+
+%% @2018.12.27 剔除波动率低的品种（华泰新动量因子）
+
+
 
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）

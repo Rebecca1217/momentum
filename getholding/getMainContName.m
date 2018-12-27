@@ -13,7 +13,8 @@ hands = posHands.fullHands;
 
 %% 调整成targetPortfolio格式
 % 第一步，先unstack maincontTable，把品种名称散到列名，和持仓手数表保持一致
-mainContTrans = mainContTable(:, [1 4 5]);
+mainContTrans = table(mainContTable.Date, mainContTable.ContName, mainContTable.MainCont, ...
+    'VariableNames', {'Date', 'ContName', 'MainCont'}); % 不要用选取[1 4 5]列这种方式，后期mainContTable列数可能有修改
 mainContTrans.ContName = cellfun(@char, mainContTrans.ContName, 'UniformOutput', false);
 mainContTrans = unstack(mainContTrans, 'MainCont', 'ContName');
 mainContTrans = delStockBondIdx(mainContTrans);
