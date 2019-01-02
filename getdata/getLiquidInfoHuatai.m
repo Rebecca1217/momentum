@@ -4,7 +4,7 @@ function res = getLiquidInfoHuatai(dateFrom, dateTo, n, pct, ifPctReverse)
 % 分位数默认是从高到低排序
 
 % 按照华泰证券的标准筛选： 主力合约过去60天平均成交金额，计算每日成交金额
-usualPath = '\\Cj-lmxue-dt\期货数据2.0\usualData';
+% usualPath = '\\Cj-lmxue-dt\期货数据2.0\usualData';
 % liquidPath = [usualPath, '\liquidityInfo'];  %
 % 原先是直接从期货数据2.0里面漫雪每天更新的liquidityInfo读取
 % 2018.12.26改成从Z盘漫雪重新整理的表读取交易量，自己按照标准筛选
@@ -15,9 +15,10 @@ tradingDay = gettradingday(dateFrom, dateTo);
 % varieties = getallvarieties([usualPath, '\fut_variety.mat']);
 
 % 得到每天每个品种的交易量
-mainContTable = getmaincont();
+mainContTable = getBasicData();
 mainContTable.Amount = mainContTable.Volume .* mainContTable.Close .* mainContTable.MultiFactor;
-mainContTable = mainContTable(:, [1 7 8]);
+mainContTable = table(mainContTable.Date, mainContTable.ContName, mainContTable.Amount, ...
+    'VariableNames', {'Date', 'ContName', 'Amount'});
 
 mainContTable.ContName = cellfun(@char, mainContTable.ContName, 'UniformOutput', false);
 res = unstack(mainContTable, 'Amount', 'ContName');

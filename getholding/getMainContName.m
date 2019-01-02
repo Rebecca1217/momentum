@@ -2,7 +2,7 @@ function targetPortfolio = getMainContName(posHands)
 %输入每日持仓方向和手数，输出每日持仓的主力合约名称
 % 
 % %% 得到每天每个品种的主力合约代码
-mainContTable = getmaincont();
+mainContTable = getBasicData();
 
 %% 和posFullDirect， posHands结合到一起
 hands = posHands.fullHands;

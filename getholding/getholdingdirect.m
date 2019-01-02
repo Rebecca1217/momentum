@@ -26,6 +26,39 @@ res = array2table(res, 'VariableName', resTrading.Properties.VariableNames);
 % 这个地方用rowfun能不能实现？ 感觉应该是可以的，但是试了一下不行。。
 % error msg: 未定义与 'function_handle' 类型的输入参数相对应的函数 'rowfun'。
 % 感觉是2016B版本的rowfun有点问题，网上也有人遇到。暂时用arrayfun或者cellfun代替。
+% 
+% %% 12.28 加入MA限制
+% % 计算MA
+% numMA = 20;
+% % resTrading.Date
+% 
+% basicData = getBasicData();
+% basicData.ContName = cellfun(@char, basicData.ContName, 'UniformOutput', false);
+% basicData.AdjClose = basicData.Close .* basicData.AdjFactor;
+% 
+% adjClose = table(basicData.Date, basicData.ContName, basicData.AdjClose, ...
+%     'VariableNames', {'Date', 'ContName', 'AdjClose'});
+% adjClose = unstack(adjClose, 'AdjClose', 'ContName');
+% adjClose = delStockBondIdx(adjClose);
+% closeMA = movmean(table2array(adjClose(:, 2:end)), [numMA - 1, 0]);
+% 
+% labelMA = table2array(adjClose(:, 2:end)) >= closeMA;
+% labelMA = double(labelMA);
+% labelMA = arrayfun(@(x, y, z) ifelse(x == 0, -1, x), labelMA); % 不能简单这么处理 因为0可能是小于MA 也可能是空值
+% labelNonNaN = ~isnan(table2array(adjClose(:, 2:end)));
+% labelMA = [adjClose.Date, labelMA .* labelNonNaN]; % labelMA中1表示AdjClose>MA20，-1表示小于，0表示AdjClose是NaN
+% 
+% %% 加入MA筛选后的结果
+% 
+% % 日期选择 
+% [~, idx, ~] = intersect(labelMA(:, 1), res.Date);
+% labelMA = labelMA(idx, :);
+% 
+% % 对比结果
+% tmp = [res.Date, table2array(res(:, 2:end)) == labelMA(:, 2:end)];
+% tmp = [res.Date, tmp(:, 2:end) .* table2array(res(:, 2:end))]; 
+% 
+% res = array2table(tmp, 'VariableNames', res.Properties.VariableNames);
 
 end
 

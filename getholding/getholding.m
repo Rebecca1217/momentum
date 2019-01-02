@@ -5,14 +5,35 @@ function res = getholding(passway)
 
 factorData = evalin('base', 'factorData');
 %% 剔除流动性差的品种
+% @2018.12.28 发现一个大bug！！！label不能直接和数值相乘。。label要和label相乘。。
+% 之前做的时候liquidityInfo直接和factorData相乘，以为是把流动性低的剔除了，实际是把factorData里流动性低的品种因子值改为0了。。
+% 2个改正方案：1、把label矩阵里0都改成NaN，然后再相乘，思路和原来一样
+% 2、因子先排序，选出品种标签以后，标签矩阵和标签矩阵点乘得到最后的持仓标签
 liquidityInfo = evalin('base', 'liquidityInfo');
 % 这里factorData因子数据是缺失第一个时间窗口的；liquidityInfo是from-to全部时间的
+liquidityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), liquidityInfo);
 res = table2array(factorData(:, 2:end)) .* liquidityInfo; % 忽略Warn，factorData是load出来的
 res = [factorData.Date, res]; % 流动性品种的每日因子数据
 
 
 %% @2018.12.27 剔除波动率低的品种（华泰新动量因子）
+% 波动率回溯时长固定14
+% volatilityInfo = getVolatility(pct, factorData.Date(1), factorData.Date(end), 'ATR');
+% res = res(:, 2:end) .* table2array(volatilityInfo(:, 2:end));
+% res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
+%% @2018.12.28 剔除波动率低的品种（华泰新动量因子）
+% 波动率回溯时长与因子窗口一致
+win = evalin('base', 'window(iWin)');
+pct = evalin('base', 'tradingPara.pct');
+volatilityInfo = getVolatility(win, pct, factorData.Date(1), factorData.Date(end), 'sigma');
+volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatilityInfo(:, 2:end)));
+
+res = res(:, 2:end) .* volatilityInfo;
+res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
+
+%% 2019.1.2 现货溢价还是期货溢价 排名与动量相加结合因子还是双重分组？ 暂定双重分组
+premiumInfo = getPremium();
 
 
 %% 确定各品种的持仓

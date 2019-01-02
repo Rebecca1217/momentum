@@ -26,6 +26,7 @@ window = 5:5:30;
 holdingTime = 5:5:15;
 
 tradingPara.groupNum = 5; % 对冲比例10%，20%对应5组
+tradingPara.pct = 0; % 高波动率筛选的标准，剔除百分位pctATR以下的
 tradingPara.capital = 10000000;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
 tradingPara.futMainContPath = '\\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码';
@@ -56,10 +57,7 @@ tradingPara.slip = 0; %滑点 两家券商都不加滑点
 
 %% 用因子排序得到多空组合，包括持仓方向，手数
 % 这中间先得到调仓日多空方向，补齐非调仓日的方向，然后再把主力合约填补进去
-% 持仓期暂定40个交易日，分为5组
 
-% 这个liquidityInfo跑起来比较慢，想一下能不能改进？
-% 如果不能改进的话可不可以存在一个地方，定期更新，每次用的时候去读
 % 本地保存liquidityData的时候是一个包含Date及列名的table
 % 和因子数据点乘的时候用的是不含Date和列名的matrix
 
@@ -107,6 +105,9 @@ for iWin = 1:length(window) % 每个时间窗口
             % 这个地方有个潜在是问题：持仓矩阵里面的0包含了缺失数据NaN和处于中间位置不多不空两种情况
             % 现在因为不管是哪种情况，不持仓它们先不用管，后期如果需要的话再加以区分（暂时想不到什么情况是需要区分的？）
             
+            
+%             posTradingDirect = secondSelect(posTradingDirect1);
+            
             % 写一个向下补全的函数，输入换仓日的持仓和目标日期序列，第一个换仓日之前的不管，下面的补齐
             %         posFullDirect = getfullholding(posTradingDirect, factorData.Date);
             % 因为后面的算法，逻辑是从因子数据的第一天开始换手，所以完整的持仓日期就是因子数据的日期
@@ -143,9 +144,11 @@ for iWin = 1:length(window) % 每个时间窗口
             [BacktestResult,err] = CTABacktest_GeneralPlatform_3(targetPortfolio,tradingPara);
             %         figure
             %         % 净值曲线
-            %         dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
-            %         plot(dn, (tradingPara.capital + BacktestResult.nv(:, 2)) ./ tradingPara.capital)
-            %         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
+%                     dn = datenum(num2str(BacktestResult.nv(:, 1)), 'yyyymmdd');
+%                     plot(dn, ((tradingPara.capital / tradingPara.passway)  + ...
+%                         BacktestResult.nv(:, 2)) ./ (tradingPara.capital / tradingPara.passway))
+%                     datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
+%                     hold on
             
             BacktestAnalysis = CTAAnalysis_GeneralPlatform_2(BacktestResult);
             if jPassway == 1
