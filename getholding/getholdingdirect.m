@@ -32,7 +32,7 @@ res = array2table(res, 'VariableName', resTrading.Properties.VariableNames);
 % numMA = 20;
 % % resTrading.Date
 % 
-% basicData = getBasicData();
+% basicData = getBasicData('future');
 % basicData.ContName = cellfun(@char, basicData.ContName, 'UniformOutput', false);
 % basicData.AdjClose = basicData.Close .* basicData.AdjFactor;
 % 
