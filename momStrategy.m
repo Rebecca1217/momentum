@@ -16,8 +16,8 @@ factorDataPath = 'E:\Repository\momentum\factorData\';
 factorPara.dataPath = [dataPath, '\主力合约-比例后复权'];
 factorPara.dateFrom = 20100101; % 整理的数据从这时候开始
 % factorPara.dateFrom = 20100101; % 华泰期货回测起始时间
-factorPara.dateTo = 20170831; % 推出夜盘交易前
-factorPara.priceType = 'Settle';  % 海通是复权收盘发信号，主力结算交易；华泰是复权结算发信号，主力结算交易
+factorPara.dateTo = 20180331; 
+factorPara.priceType = 'Close';  % 海通是复权收盘发信号，主力结算交易；华泰是复权结算发信号，主力结算交易
 
 % window = [5:5:50 22 60 120 250]; % 计算动量的时间窗口
 % window = [5 10 22 60 120 250]; % 华泰测试的动量时间窗口 % 感觉250这个根本没有任何道理，资金平均分成250份一天进一份连1手都买不了。。
@@ -26,7 +26,7 @@ window = 5:5:30;
 holdingTime = 5:5:15;
 
 tradingPara.groupNum = 5; % 对冲比例10%，20%对应5组
-tradingPara.pct = 0; % 高波动率筛选的标准，剔除百分位pctATR以下的
+tradingPara.pct = 0.25; % 高波动率筛选的标准，剔除百分位pctATR以下的
 tradingPara.capital = 10000000;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
 tradingPara.futMainContPath = '\\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码';

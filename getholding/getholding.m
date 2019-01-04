@@ -32,9 +32,6 @@ volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatil
 res = res(:, 2:end) .* volatilityInfo;
 res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
-%% 2019.1.2 现货溢价还是期货溢价 排名与动量相加结合因子还是双重分组？ 暂定双重分组
-premiumInfo = getPremium();
-
 
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
@@ -51,6 +48,10 @@ resTrading = resTrading(ismember(resTrading.Date, tradingDate), :);
 
 % resTrading作为参数输入getholdingdirect.m得到换仓日的持仓方向结果
 res = getholdingdirect(resTrading);
+
+
+% 
+res = premiumSelect(res);
 
 end
 

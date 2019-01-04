@@ -5,7 +5,7 @@ function res = getVolatility(win, pct, dateFrom, dateTo, type)
 
 tradingDay = gettradingday(dateFrom, dateTo);
 
-basicData = getBasicData();
+basicData = getBasicData('future');
 basicData.ContName = cellfun(@char, basicData.ContName, 'UniformOutput', false);
 
 
