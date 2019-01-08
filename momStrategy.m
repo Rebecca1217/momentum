@@ -14,10 +14,10 @@ factorDataPath = 'E:\Repository\momentum\factorData\';
 % 动量因子
 % 可变参数包括：动量时间窗口，调仓间隔（持仓日期）
 factorPara.dataPath = [dataPath, '\主力合约-比例后复权'];
-factorPara.dateFrom = 20100101; % 整理的数据从这时候开始
+factorPara.dateFrom = 20100101; 
 % factorPara.dateFrom = 20100101; % 华泰期货回测起始时间
 factorPara.dateTo = 20180331; 
-factorPara.priceType = 'Close';  % 海通是复权收盘发信号，主力结算交易；华泰是复权结算发信号，主力结算交易
+factorPara.priceType = 'Close';  % 海通和华泰都是复权收盘发信号，主力结算交易
 
 % window = [5:5:50 22 60 120 250]; % 计算动量的时间窗口
 % window = [5 10 22 60 120 250]; % 华泰测试的动量时间窗口 % 感觉250这个根本没有任何道理，资金平均分成250份一天进一份连1手都买不了。。
@@ -27,7 +27,7 @@ holdingTime = 5:5:15;
 
 tradingPara.groupNum = 5; % 对冲比例10%，20%对应5组
 tradingPara.pct = 0.25; % 高波动率筛选的标准，剔除百分位pctATR以下的
-tradingPara.capital = 10000000;
+tradingPara.capital = 1e8;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
 tradingPara.futMainContPath = '\\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码';
 tradingPara.futDataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData\主力合约'; %期货主力合约数据路径
@@ -65,7 +65,7 @@ factorName = 'momFactorData';
 bcktstAnalysis = num2cell(nan(13, length(window) * length(holdingTime) + 1));
 for iWin = 1:length(window) % 每个时间窗口
     for kHolding = 1:length(holdingTime)
-        
+        tic
         tradingPara.holdingTime = holdingTime(kHolding); % 调仓间隔（持仓日期）
         tradingPara.passway = tradingPara.holdingTime;
         load([factorDataPath, factorName, '\window', num2str(window(iWin)), '.mat']);
@@ -99,9 +99,12 @@ for iWin = 1:length(window) % 每个时间窗口
         % 10条通道的话，intersect 22.78秒，outerjoin 23.08秒，所以还是用intersect做
         %% 每条通道循环测试
         for jPassway = 1 : tradingPara.passway % 每条通道  比较不同通道下的结果
+           
             win = window(iWin);
             passway = jPassway;
+          
             posTradingDirect = getholding(passway); %得到iWin和jPassway下的换仓日序列持仓方向
+        
             % 这个地方有个潜在是问题：持仓矩阵里面的0包含了缺失数据NaN和处于中间位置不多不空两种情况
             % 现在因为不管是哪种情况，不持仓它们先不用管，后期如果需要的话再加以区分（暂时想不到什么情况是需要区分的？）
             
@@ -133,8 +136,9 @@ for iWin = 1:length(window) % 每个时间窗口
             % 持仓手数和主力合约名称以两个表的形式保存吗？
             % 持仓手数 = (投入本金/持仓品种数)/(合约乘数/ * 价格) 平均分配本金
             % 手数经过最小变动单位向下调整
+            tic
             posHands = getholdinghands(posTradingDirect, posFullDirect, tradingPara.capital / tradingPara.passway);
-            
+            toc
             targetPortfolio = getMainContName(posHands);
             
             % targetPortfolio需要做一个调整：
@@ -196,7 +200,7 @@ for iWin = 1:length(window) % 每个时间窗口
         totalBacktestAnalysis = CTAAnalysis_GeneralPlatform_2(totalBacktestResult);
         
         dn = datenum(num2str(totalBacktestResult.nv(:, 1)), 'yyyymmdd');
-        plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital)
+        plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital, 'DisplayName', '老动量')
         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
         hold on
         if iWin == 1 && kHolding == 1
@@ -205,9 +209,19 @@ for iWin = 1:length(window) % 每个时间窗口
             bcktstAnalysis(:, (iWin - 1) * length(holdingTime) + kHolding + 1) = ...
                 totalBacktestAnalysis(:, 2);
         end
-        
+        toc
     end
 end
 
-
-
+% % 新老动量合成作图：
+bctNV = xlsread('C:\Users\fengruiling\Desktop\bctNV.xlsx');
+bctExp = xlsread('C:\Users\fengruiling\Desktop\bctexp.xlsx');
+tst = [bctNV(:, 1), bctNV(:, 2) + totalBacktestResult.nv(:, 2), bctNV(:, 3) + totalBacktestResult.nv(:, 3)];
+tst2 = [bctNV(:, 1), bctExp(:, 2) + totalBacktestResult.nv(:, 2)];
+tstRes.nv = tst;
+tstRes.riskExposure = tst2;
+tstBctAnalysis = CTAAnalysis_GeneralPlatform_2(tstRes);
+plot(dn, (tradingPara.capital + bctNV(:, 2)) ./ tradingPara.capital, 'DisplayName', '新动量')
+hold on
+plot(dn, (tradingPara.capital * 2 + tst(:, 2)) ./ (tradingPara.capital * 2), 'DisplayName', '合成')
+legend('老动量', '新动量', '合成')

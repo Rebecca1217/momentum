@@ -50,8 +50,10 @@ resTrading = resTrading(ismember(resTrading.Date, tradingDate), :);
 res = getholdingdirect(resTrading);
 
 
-% 
+% 现货溢价筛选
 res = premiumSelect(res);
-
+% 
+% % 因子绝对值筛选
+% res = factorSelect(res);
 end
 

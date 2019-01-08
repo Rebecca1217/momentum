@@ -39,14 +39,15 @@ priceDataHolding = priceData(ismember(priceData.Date, posTradingDirect.Date), :)
 fullUnitInfoTrading = unitInfo(ismember(unitInfo.Date, posFullDirect.Date), :);
 fullPriceDataHolding = priceData(ismember(priceData.Date, posFullDirect.Date), :);
 % 下面这段用于计算调仓日上一个交易日的收盘价格，计算t日手数用的是t-1收盘价
-[~, ra, ~] = intersect(priceData.Date, posTradingDirect.Date);
-priceLastDay = priceData((ra - 1), :);
-clear ra
+% [~, ra, ~] = intersect(priceData.Date, posTradingDirect.Date);
+% priceLastDay = priceData((ra - 1), :);
+% clear ra
+%@2019.01.07 修改为根据t日的收盘价确定t+1日的开仓手数，记录在t日
 
 hands = round(...
     repmat(tradingAmount, 1, size(posTradingDirect, 2) - 1)  ./ ...
     (table2array(unitInfoTrading(:, 2:end)) .* ...
-    table2array(priceLastDay(:, 2:end))) .* ...
+    table2array(priceDataHolding(:, 2:end))) .* ...
     table2array(posTradingDirect(:, 2:end)));
 % tradingAmount是平均分配给持仓品种/futAllocationFactor.m里面是平均分配给当天全部流动性品种
 % 根据t-1日的收盘价格确定t日的开仓手数，记录在t日
