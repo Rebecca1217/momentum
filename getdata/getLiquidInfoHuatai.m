@@ -15,7 +15,7 @@ tradingDay = gettradingday(dateFrom, dateTo);
 % varieties = getallvarieties([usualPath, '\fut_variety.mat']);
 
 % 得到每天每个品种的交易量
-mainContTable = getBasicData();
+mainContTable = getBasicData('future');
 mainContTable.Amount = mainContTable.Volume .* mainContTable.Close .* mainContTable.MultiFactor;
 mainContTable = table(mainContTable.Date, mainContTable.ContName, mainContTable.Amount, ...
     'VariableNames', {'Date', 'ContName', 'Amount'});

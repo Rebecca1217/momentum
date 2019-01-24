@@ -32,7 +32,6 @@ volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatil
 res = res(:, 2:end) .* volatilityInfo;
 res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
-
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
 holdingTime = evalin('base', 'tradingPara.holdingTime');
@@ -49,10 +48,11 @@ resTrading = resTrading(ismember(resTrading.Date, tradingDate), :);
 % resTrading作为参数输入getholdingdirect.m得到换仓日的持仓方向结果
 res = getholdingdirect(resTrading);
 
-
-% 现货溢价筛选
-res = premiumSelect(res);
 % 
+% % 现货溢价筛选
+% res = premiumSelect(res);
+
+% % 
 % % 因子绝对值筛选
 % res = factorSelect(res);
 end

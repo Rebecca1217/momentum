@@ -13,7 +13,8 @@ factorDataPath = 'E:\Repository\momentum\factorData\';
 %% ¼ÆËãÒò×Ó
 % ¶¯Á¿Òò×Ó
 % ¿É±ä²ÎÊı°üÀ¨£º¶¯Á¿Ê±¼ä´°¿Ú£¬µ÷²Ö¼ä¸ô£¨³Ö²ÖÈÕÆÚ£©
-factorPara.dataPath = [dataPath, '\Ö÷Á¦ºÏÔ¼-±ÈÀıºó¸´È¨'];
+factorPara.dataPath = [dataPath, '\Ö÷Á¦ºÏÔ¼-±ÈÀıºó¸´È¨']; % ¼ÆËãÒò×Ó£¨ÊÕÒæÂÊ£©ÓÃ¸´È¨Êı¾İ
+factorPara.lotsDataPath = [dataPath, '\Ö÷Á¦ºÏÔ¼']; % ¼ÆËãÊÖÊıĞèÒªÓÃÖ÷Á¦ºÏÔ¼£¬²»¸´È¨
 factorPara.dateFrom = 20100101; 
 % factorPara.dateFrom = 20100101; % »ªÌ©ÆÚ»õ»Ø²âÆğÊ¼Ê±¼ä
 factorPara.dateTo = 20180331; 
@@ -22,8 +23,8 @@ factorPara.priceType = 'Close';  % º£Í¨ºÍ»ªÌ©¶¼ÊÇ¸´È¨ÊÕÅÌ·¢ĞÅºÅ£¬Ö÷Á¦½áËã½»Ò×
 % window = [5:5:50 22 60 120 250]; % ¼ÆËã¶¯Á¿µÄÊ±¼ä´°¿Ú
 % window = [5 10 22 60 120 250]; % »ªÌ©²âÊÔµÄ¶¯Á¿Ê±¼ä´°¿Ú % ¸Ğ¾õ250Õâ¸ö¸ù±¾Ã»ÓĞÈÎºÎµÀÀí£¬×Ê½ğÆ½¾ù·Ö³É250·İÒ»Ìì½øÒ»·İÁ¬1ÊÖ¶¼Âò²»ÁË¡£¡£
 % holdingTime = [5 10 22 60 120 250];
-window = 5:5:30;
-holdingTime = 5:5:15;
+window = [5:5:20 30 60 120];
+holdingTime = [5:5:15 30 60 120];
 
 tradingPara.groupNum = 5; % ¶Ô³å±ÈÀı10%£¬20%¶ÔÓ¦5×é
 tradingPara.pct = 0.25; % ¸ß²¨¶¯ÂÊÉ¸Ñ¡µÄ±ê×¼£¬ÌŞ³ı°Ù·ÖÎ»pctATRÒÔÏÂµÄ
@@ -34,8 +35,8 @@ tradingPara.futDataPath = '\\Cj-lmxue-dt\ÆÚ»õÊı¾İ2.0\dlyData\Ö÷Á¦ºÏÔ¼'; %ÆÚ»õÖ÷Á
 tradingPara.futUnitPath = '\\Cj-lmxue-dt\ÆÚ»õÊı¾İ2.0\usualData\minTickInfo.mat'; %ÆÚ»õ×îĞ¡±ä¶¯µ¥Î»
 tradingPara.futMultiPath = '\\Cj-lmxue-dt\ÆÚ»õÊı¾İ2.0\usualData\PunitInfo'; %ÆÚ»õºÏÔ¼³ËÊı
 tradingPara.PType = 'open'; %½»Ò×¼Û¸ñ£¬Ò»°ãÓÃopen£¨¿ªÅÌ¼Û£©»òÕßavg(ÈÕ¾ù¼Û£©
-tradingPara.fixC = 0.0003; %¹Ì¶¨³É±¾ »ªÌ©ÊÇµ¥±ßÍòÎå£¬º£Í¨µ¥±ßÍòÈı
-tradingPara.slip = 0; %»¬µã Á½¼ÒÈ¯ÉÌ¶¼²»¼Ó»¬µã
+tradingPara.fixC = 0.0002; %¹Ì¶¨³É±¾ »ªÌ©ÊÇµ¥±ßÍòÎå£¬º£Í¨µ¥±ßÍòÈı
+tradingPara.slip = 2; %»¬µã Á½¼ÒÈ¯ÉÌ¶¼²»¼Ó»¬µã
 
 %
 % @2018.12.24 ¼ÆËãfactorDataµÄÊ±ºò¾Í°Ñ¹úÕ®ÆÚ»õºÍ¹ÉÖ¸ÆÚ»õÌŞ³ı
@@ -65,7 +66,7 @@ factorName = 'momFactorData';
 bcktstAnalysis = num2cell(nan(13, length(window) * length(holdingTime) + 1));
 for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
     for kHolding = 1:length(holdingTime)
-        tic
+       
         tradingPara.holdingTime = holdingTime(kHolding); % µ÷²Ö¼ä¸ô£¨³Ö²ÖÈÕÆÚ£©
         tradingPara.passway = tradingPara.holdingTime;
         load([factorDataPath, factorName, '\window', num2str(window(iWin)), '.mat']);
@@ -74,6 +75,7 @@ for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
             factorData.Date <= factorPara.dateTo, :);
         % Òò×ÓÊı¾İÉ¸Ñ¡£ºµÚ¶ş£ºÁ÷¶¯ĞÔ
         %     Ã¿´ÎÑ­»·µÄliquidityInfoÊ±¼ä²»Ò»Ñù£¬ÓëfactorDataµÄÊ±¼ä±£³ÖÒ»ÖÂ
+%         load('E:\futureData\liquidityInfo.mat')
         load('E:\futureData\liquidityInfoHuatai.mat')
         liquidityInfo = liquidityInfoHuatai;
         liquidityInfo = liquidityInfo(...
@@ -136,9 +138,9 @@ for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
             % ³Ö²ÖÊÖÊıºÍÖ÷Á¦ºÏÔ¼Ãû³ÆÒÔÁ½¸ö±íµÄĞÎÊ½±£´æÂğ£¿
             % ³Ö²ÖÊÖÊı = (Í¶Èë±¾½ğ/³Ö²ÖÆ·ÖÖÊı)/(ºÏÔ¼³ËÊı/ * ¼Û¸ñ) Æ½¾ù·ÖÅä±¾½ğ
             % ÊÖÊı¾­¹ı×îĞ¡±ä¶¯µ¥Î»ÏòÏÂµ÷Õû
-            tic
+        
             posHands = getholdinghands(posTradingDirect, posFullDirect, tradingPara.capital / tradingPara.passway);
-            toc
+        
             targetPortfolio = getMainContName(posHands);
             
             % targetPortfolioĞèÒª×öÒ»¸öµ÷Õû£º
@@ -200,7 +202,7 @@ for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
         totalBacktestAnalysis = CTAAnalysis_GeneralPlatform_2(totalBacktestResult);
         
         dn = datenum(num2str(totalBacktestResult.nv(:, 1)), 'yyyymmdd');
-        plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital, 'DisplayName', 'ÀÏ¶¯Á¿')
+        plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital, 'DisplayName', '¸Ä½øÀÏ¶¯Á¿')
         datetick('x', 'yyyymmdd', 'keepticks', 'keeplimits')
         hold on
         if iWin == 1 && kHolding == 1
@@ -209,13 +211,15 @@ for iWin = 1:length(window) % Ã¿¸öÊ±¼ä´°¿Ú
             bcktstAnalysis(:, (iWin - 1) * length(holdingTime) + kHolding + 1) = ...
                 totalBacktestAnalysis(:, 2);
         end
-        toc
+
     end
 end
 
 % % ĞÂÀÏ¶¯Á¿ºÏ³É×÷Í¼£º
+% ĞÂ¶¯Á¿½á¹û±£´æ
 bctNV = xlsread('C:\Users\fengruiling\Desktop\bctNV.xlsx');
 bctExp = xlsread('C:\Users\fengruiling\Desktop\bctexp.xlsx');
+% ÓëÀÏ¶¯Á¿½á¹û»ã×Ü
 tst = [bctNV(:, 1), bctNV(:, 2) + totalBacktestResult.nv(:, 2), bctNV(:, 3) + totalBacktestResult.nv(:, 3)];
 tst2 = [bctNV(:, 1), bctExp(:, 2) + totalBacktestResult.nv(:, 2)];
 tstRes.nv = tst;
@@ -224,4 +228,4 @@ tstBctAnalysis = CTAAnalysis_GeneralPlatform_2(tstRes);
 plot(dn, (tradingPara.capital + bctNV(:, 2)) ./ tradingPara.capital, 'DisplayName', 'ĞÂ¶¯Á¿')
 hold on
 plot(dn, (tradingPara.capital * 2 + tst(:, 2)) ./ (tradingPara.capital * 2), 'DisplayName', 'ºÏ³É')
-legend('ÀÏ¶¯Á¿', 'ĞÂ¶¯Á¿', 'ºÏ³É')
+legend('¸Ä½øÀÏ¶¯Á¿', 'ĞÂ¶¯Á¿', 'ºÏ³É')

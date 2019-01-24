@@ -10,7 +10,7 @@ fullTradingAmount = capital ./ fullTradingNum;
 % load price 
 % 合约手数 = 名义市值 ./ （合约乘数 .* 合约价格） .* posfullDirect
 factorPara = evalin('base', 'factorPara');
-dataPara.path = factorPara.dataPath;
+dataPara.path = factorPara.lotsDataPath; % @2019.1.8计算合约手数用不复权 主力收盘价
 dataPara.dateFrom = str2double(datestr(datenum(num2str(factorPara.dateFrom), 'yyyymmdd') - 10, 'yyyymmdd'));
 dataPara.dateTo = factorPara.dateTo;
 dataPara.priceType = factorPara.priceType;
