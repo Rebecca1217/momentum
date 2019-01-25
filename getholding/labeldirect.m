@@ -1,6 +1,7 @@
 function res = labeldirect(inputCell, selecNum)
 %label trading direct based on factor data
 
+direct = evalin('base', 'tradingPara.direct');
 if ~(isnumeric(inputCell))
     error('inputCell should be a 1*n numeric array.')
 end
@@ -19,8 +20,8 @@ shortIndex = 1 : selecNum;
 [~, idx] = sort(idx, 'ascend'); % 这种处理方式，没有并列，相等的会按照出现的顺序排列，NaN全部排在最后
 
 
-res(ismember(idx, shortIndex)) = -1;
-res(ismember(idx, longIndex)) = 1;
+res(ismember(idx, shortIndex)) = -1 * direct;
+res(ismember(idx, longIndex)) = 1 * direct;
 
 end
 

@@ -13,14 +13,15 @@ groupNum = evalin('base', 'tradingPara.groupNum');
 % 有必要保存下来吗？
 % 只取第一组和最后一组就可以了，不涉及中间的部分。而且中间的数据做了= []处理以后，数都对不齐
 
-% 貌似还是有必要，因为也想看看中间其他组的表现啊，看这个因子是否有区分度
-num = floor((size(resTrading, 2) - 1 ) / groupNum);
+% 貌似还是有必要，因为也想看看中间其他组的表现啊，看这个因子是否有区分度 先不用管了，在单独测因子的时候看过区分度了
+num = floor((size(resTrading, 2) - 1 ) / groupNum); % 每组有几个品种
 
 % 对resTrading的每一行进行sort后取前num个做空，后num个做多
 % 如果遇到非空数值还不到2*num的情况，就缩减选择品种个数
 res = table2array(resTrading(:, 2:end));
 res = num2cell(res, 2);
 res = cellfun(@(o) labeldirect(o, num), res, 'UniformOutput', false);
+% res = cellfun(@(o) labelDirectRank(o, num), res, 'UniformOutput', false);
 res = [resTrading.Date cell2mat(res)]; % add Date and convert it to table
 res = array2table(res, 'VariableName', resTrading.Properties.VariableNames);
 % 这个地方用rowfun能不能实现？ 感觉应该是可以的，但是试了一下不行。。
