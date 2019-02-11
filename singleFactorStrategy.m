@@ -14,17 +14,17 @@ factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
 
-factorName = 'MACDStdSq';
+factorName = 'SpotPremiumV2';
 % 因子本身参数在这里已无需设置了，这里的参数只是策略上的参数，如持仓时间
 % factorPara.dataPath = [dataPath, '\主力合约-比例后复权']; % 计算因子（收益率）用复权数据
 factorPara.lotsDataPath = [dataPath, '\主力合约']; % 计算手数需要用主力合约，不复权
 factorPara.dateFrom = 20100101;
-factorPara.dateTo = 20170831;
+factorPara.dateTo = 20181231;
 factorPara.priceType = 'Close';  % 海通和华泰都是复权收盘发信号，主力结算交易
-holdingTime = 15;
+holdingTime = 50;
 
-tradingPara.groupNum = 5; % 对冲比例10%，20%对应5组
-tradingPara.pct = 0; % 高波动率筛选的标准，剔除百分位pctATR以下的
+tradingPara.groupNum = 3; % 对冲比例10%，20%对应5组
+% tradingPara.pct = 0; % 高波动率筛选的标准，剔除百分位pctATR以下的
 tradingPara.capital = 1e8;
 tradingPara.direct = 1;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
@@ -67,15 +67,25 @@ for kHolding = 1:length(holdingTime)
     % 因子数据筛选：第二：流动性
     %     每次循环的liquidityInfo时间不一样，与factorData的时间保持一致
     %         load('E:\futureData\liquidityInfo.mat')
-    load('E:\futureData\liquidityInfoHuatai.mat')
-    liquidityInfo = liquidityInfoHuatai;
+%     load('E:\futureData\liquidityInfoHuatai.mat')
+%     liquidityInfo = liquidityInfoHuatai;
+%     liquidityInfo = liquidityInfo(...
+%         liquidityInfo.Date >= min(factorData.Date) &...
+%         liquidityInfo.Date <= max(factorData.Date), :);
+%     % @2018.12.24 liquidityInfo也要剔除股指和国债期货
+%     % 因子数据筛选：第三：纯商品部分
+%     liquidityInfo = delStockBondIdx(liquidityInfo); %% 这一步其实不用，因为Huatai版本已经剔除了股指和国债期货
+%     liquidityInfo = table2array(liquidityInfo(:, 2:end));
+%     
+    %@2019.02.01流动性标准改为TableData.status，和漫雪一致测试
+    tableData = getBasicData('future');
+    tableData.ContName = cellfun(@char, tableData.ContName, 'UniformOutput', false);
+    liquidityInfo = unstack(tableData(:, {'Date', 'ContName', 'LiqStatus'}), 'LiqStatus', 'ContName');
     liquidityInfo = liquidityInfo(...
-        liquidityInfo.Date >= min(factorData.Date) &...
-        liquidityInfo.Date <= max(factorData.Date), :);
-    % @2018.12.24 liquidityInfo也要剔除股指和国债期货
-    % 因子数据筛选：第三：纯商品部分
+        liquidityInfo.Date >= factorData.Date(1) & ...
+        liquidityInfo.Date <= factorData.Date(end), :);
     liquidityInfo = delStockBondIdx(liquidityInfo);
-    liquidityInfo = table2array(liquidityInfo(:, 2:end)); %% 这一步其实不用，因为Huatai版本已经剔除了股指和国债期货
+    liquidityInfo = table2array(liquidityInfo(:, 2:end));
     
     %% 定义回测汇总结果
     totalRes = num2cell(nan(13, tradingPara.passway + 1));
