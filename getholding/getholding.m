@@ -22,15 +22,16 @@ res = [factorData.Date, res]; % 流动性品种的每日因子秩
 % res = res(:, 2:end) .* table2array(volatilityInfo(:, 2:end));
 % res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 % 
-% %% @2018.12.28 剔除波动率低的品种（华泰新动量因子）
-% % 波动率回溯时长与因子窗口一致
+%% @2018.12.28 剔除波动率低的品种（华泰新动量因子）
+% 波动率回溯时长与因子窗口一致
 % win = evalin('base', 'window(iWin)');
-% pct = evalin('base', 'tradingPara.pct');
-% volatilityInfo = getVolatility(win, pct, factorData.Date(1), factorData.Date(end), 'sigma');
-% volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatilityInfo(:, 2:end)));
-% 
-% res = res(:, 2:end) .* volatilityInfo;
-% res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
+win = 90;
+pct = evalin('base', 'tradingPara.pct');
+volatilityInfo = getVolatility(win, pct, factorData.Date(1), factorData.Date(end), 'sigma');
+volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatilityInfo(:, 2:end)));
+
+res = res(:, 2:end) .* volatilityInfo;
+res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
