@@ -16,10 +16,15 @@ dataPara.dateTo = factorPara.dateTo;
 dataPara.priceType = factorPara.priceType;
 
 priceData = getpricedata(dataPara);
+varNames = priceData.Properties.VariableNames;
 % 这个地方priceData要保留比dateFrom稍往前一点，因为需要上一个交易日的价格来确定调仓日手数
 % 第一天就是调仓日的话，priceData需要保留第一天往前一个交易日的价格信息
 % priceData = priceData(priceData.Date >= min(posFullDirect.Date) & ...
 %     priceData.Date <= max(posFullDirect.Date), :);
+% @2019.2.14 这个priceData里面有0，需要往上fill0
+priceData = varfun(@fill0Price, priceData);
+priceData.Properties.VariableNames = varNames;
+clear varNames
 
 % load 合约乘数 unitInfo 和 liquidInfo一样，每天晚上更新table数据，用的时候load就可以了
 load('E:\futureData\unitInfo.mat')

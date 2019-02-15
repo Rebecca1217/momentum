@@ -1,4 +1,4 @@
-function res = getholding(passway)
+function res = getholding(passway, tradingPara)
 %得到每期持仓品种和方向
 % 先得到换仓日的，然后填充到中间的每天得到完整的持仓品种和方向，
 % 之后再考虑手数和合约名字的问题
@@ -37,7 +37,7 @@ res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
 holdingTime = evalin('base', 'tradingPara.holdingTime');
 tradingDate = res(:, 1);
-tradingIndex = (passway:holdingTime:size(res, 1));
+tradingIndex = ((tradingPara.passwayInterval * (passway - 1)) + 1:holdingTime:size(res, 1));
 tradingDate = tradingDate(tradingIndex);
 % iWin = 1, passway = 1时，从因子出现的第一天就开始配置
 

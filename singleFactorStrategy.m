@@ -13,8 +13,12 @@ dataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData';
 factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
+% fNameUniverse = {'SpotPremiumV1', 'SpotPremiumV2', 'SpotPremiumV3', 'SpotPremiumV4'};
+% finalRes = num2cell(nan(13, length(fNameUniverse) + 1));
+% for iFactor = 1:4
 
-factorName = 'SpotPremiumV2';
+% factorName = fNameUniverse{iFactor};
+factorName = 'SpotPremiumV4';
 % 因子本身参数在这里已无需设置了，这里的参数只是策略上的参数，如持仓时间
 % factorPara.dataPath = [dataPath, '\主力合约-比例后复权']; % 计算因子（收益率）用复权数据
 factorPara.lotsDataPath = [dataPath, '\主力合约']; % 计算手数需要用主力合约，不复权
@@ -50,7 +54,14 @@ bcktstAnalysis = num2cell(nan(13, length(holdingTime) + 1));
 for kHolding = 1:length(holdingTime)
     
     tradingPara.holdingTime = holdingTime(kHolding); % 调仓间隔（持仓日期）
-    tradingPara.passway = tradingPara.holdingTime;
+    % 确定通道数，持仓时间30天以下的每5天一条通道，30填以上的每10天一条通道，持仓时间一般不会超过100天
+    if tradingPara.holdingTime <= 30
+        tradingPara.passwayInterval = 2;
+    else
+        tradingPara.passwayInterval = 5;
+    end
+    tradingPara.passway = floor(tradingPara.holdingTime / tradingPara.passwayInterval); % 通道数
+    
     load(factorDataPath)
     %% 因子数据筛选：第一：日期
     factorData = factorDataTT(:, {'date', 'code', factorName});
@@ -63,35 +74,35 @@ for kHolding = 1:length(holdingTime)
     factorData = unstack(factorData(:, {'date', factorName, 'ContName'}), factorName, 'ContName');
     factorData = delStockBondIdx(factorData);
     factorData.Properties.VariableNames{1} = 'Date';
-%%%%%%until now factorData是各品种因子排序
-%     % 因子数据筛选：第二：流动性
-%     %     每次循环的liquidityInfo时间不一样，与factorData的时间保持一致
-%     %         load('E:\futureData\liquidityInfo.mat')
-%     load('E:\futureData\liquidityInfoHuatai.mat')
-%     liquidityInfo = liquidityInfoHuatai;
-%     liquidityInfo = liquidityInfo(...
-%         liquidityInfo.Date >= min(factorData.Date) &...
-%         liquidityInfo.Date <= max(factorData.Date), :);
-%     % @2018.12.24 liquidityInfo也要剔除股指和国债期货
-%     % 因子数据筛选：第三：纯商品部分
-%     liquidityInfo = delStockBondIdx(liquidityInfo); %% 这一步其实不用，因为Huatai版本已经剔除了股指和国债期货
-%     liquidityInfo = table2array(liquidityInfo(:, 2:end));
-  
-    liquidityInfo = getBasicData('future');
-    avgVol = movavg(liquidityInfo.Volume, 'simple', 20);
-    nanL = NanL_from_chgCode(liquidityInfo.ContCode, 19);
-    avgVol(nanL) = 0;
-    avgVol(isnan(avgVol)) = 0;    
-   
-    liquidityInfo.LiqStatus = ones(height(liquidityInfo), 1);
-    liquidityInfo.LiqStatus(avgVol < 10000) = 1;
-    liquidityInfo = liquidityInfo(liquidityInfo.Date >= factorData.Date(1) & ...
-        liquidityInfo.Date <= factorData.Date(end), {'Date', 'ContName', 'LiqStatus'});
-    liquidityInfo.ContName = cellfun(@char, liquidityInfo.ContName, 'UniformOutput', false);
-    liquidityInfo = unstack(liquidityInfo, 'LiqStatus', 'ContName');
-    liquidityInfo = delStockBondIdx(liquidityInfo);
+    %%%%%%until now factorData是各品种因子排序
+    % 因子数据筛选：第二：流动性
+    %     每次循环的liquidityInfo时间不一样，与factorData的时间保持一致
+    %         load('E:\futureData\liquidityInfo.mat')
+    load('E:\futureData\liquidityInfoHuatai.mat')
+    liquidityInfo = liquidityInfoHuatai;
+    liquidityInfo = liquidityInfo(...
+        liquidityInfo.Date >= min(factorData.Date) &...
+        liquidityInfo.Date <= max(factorData.Date), :);
+    % @2018.12.24 liquidityInfo也要剔除股指和国债期货
+    % 因子数据筛选：第三：纯商品部分
+    liquidityInfo = delStockBondIdx(liquidityInfo); %% 这一步其实不用，因为Huatai版本已经剔除了股指和国债期货
     liquidityInfo = table2array(liquidityInfo(:, 2:end));
-
+    
+    %     liquidityInfo = getBasicData('future');
+    %     avgVol = movavg(liquidityInfo.Volume, 'simple', 20);
+    %     nanL = NanL_from_chgCode(liquidityInfo.ContCode, 19);
+    %     avgVol(nanL) = 0;
+    %     avgVol(isnan(avgVol)) = 0;
+    %
+    %     liquidityInfo.LiqStatus = ones(height(liquidityInfo), 1);
+    %     liquidityInfo.LiqStatus(avgVol < 10000) = 0;
+    %     liquidityInfo = liquidityInfo(liquidityInfo.Date >= factorData.Date(1) & ...
+    %         liquidityInfo.Date <= factorData.Date(end), {'Date', 'ContName', 'LiqStatus'});
+    %     liquidityInfo.ContName = cellfun(@char, liquidityInfo.ContName, 'UniformOutput', false);
+    %     liquidityInfo = unstack(liquidityInfo, 'LiqStatus', 'ContName');
+    %     liquidityInfo = delStockBondIdx(liquidityInfo);
+    %     liquidityInfo = table2array(liquidityInfo(:, 2:end));
+    
     %% 定义回测汇总结果
     totalRes = num2cell(nan(13, tradingPara.passway + 1));
     totalBacktestNV = nan(size(factorData, 1), tradingPara.passway + 1);
@@ -109,11 +120,11 @@ for kHolding = 1:length(holdingTime)
     for jPassway = 1 : tradingPara.passway % 每条通道  比较不同通道下的结果
         passway = jPassway;
         
-        posTradingDirect = getholding(passway); %得到iWin和jPassway下的换仓日序列持仓方向
+        posTradingDirect = getholding(passway, tradingPara); %得到iWin和jPassway下的换仓日序列持仓方向
         
         % 这个地方有个潜在是问题：持仓矩阵里面的0包含了缺失数据NaN和处于中间位置不多不空两种情况
         % 现在因为不管是哪种情况，不持仓它们先不用管，后期如果需要的话再加以区分（暂时想不到什么情况是需要区分的？）
-
+        
         % @2018.12.21更新了MATLAB以后可以用fillmissing了
         
         posFullDirect = factorData(:, 1);
@@ -171,13 +182,6 @@ for kHolding = 1:length(holdingTime)
         [~, idx0, ~] = intersect(totalBacktestNV(:, 1), BacktestResult.nv(:, 1));
         totalBacktestNV(idx0, jPassway + 1) = BacktestResult.nv(:, 2);
         totalBacktestExposure(idx0, jPassway + 1) = BacktestResult.riskExposure(:, 2);
-        % 下面几行是用outerjoin做结果汇总：
-        %         totalBacktestNV = outerjoin(totalBacktestNV, array2table(BacktestResult.nv(:, 1:2), 'VariableNames', {'Date', 'NV'}), ...
-        %             'type', 'left', 'mergekeys', true);
-        %         totalBacktestNV.Properties.VariableNames{jPassway + 1} = ['NV', num2str(jPassway)];
-        %         totalBacktestExposure = outerjoin(totalBacktestExposure, array2table(BacktestResult.riskExposure(:, 1:2), 'VariableNames', {'Date', 'Exposure'}), ...
-        %             'type', 'left', 'mergekeys', true);
-        %         totalBacktestExposure.Properties.VariableNames{jPassway + 1} = ['Exposure', num2str(jPassway)];
         
     end
     
@@ -212,9 +216,18 @@ for kHolding = 1:length(holdingTime)
     
 end
 
-% %
-% % % 新老动量合成作图：
-% % 新动量结果保存
+% if iFactor == 1
+%     finalRes(:, [1 2]) = bcktstAnalysis;
+% else
+%     finalRes(:, iFactor + 1) = ...
+%         bcktstAnalysis(:, 2);
+% end
+% end
+
+
+%
+% % 新老动量合成作图：
+% 新动量结果保存
 % bctNV = xlsread('C:\Users\fengruiling\Desktop\bctNV.xlsx');
 % bctExp = xlsread('C:\Users\fengruiling\Desktop\bctexp.xlsx');
 % % 与老动量结果汇总
@@ -226,4 +239,4 @@ end
 % plot(dn, (tradingPara.capital + bctNV(:, 2)) ./ tradingPara.capital, 'DisplayName', '新动量')
 % hold on
 % plot(dn, (tradingPara.capital * 2 + tst(:, 2)) ./ (tradingPara.capital * 2), 'DisplayName', '合成')
-% legend('改进老动量', '新动量', '合成')
+% legend('新动量', '老动量', '合成')
