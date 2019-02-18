@@ -33,25 +33,33 @@ volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatil
 res = res(:, 2:end) .* volatilityInfo;
 res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
+
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
 holdingTime = evalin('base', 'tradingPara.holdingTime');
 tradingDate = res(:, 1);
 tradingIndex = ((tradingPara.passwayInterval * (passway - 1)) + 1:holdingTime:size(res, 1));
 tradingDate = tradingDate(tradingIndex);
-% iWin = 1, passway = 1时，从因子出现的第一天就开始配置
+
 
 % 换仓日的因子排序
 resTrading = array2table(res, 'VariableNames', factorData.Properties.VariableNames);
 resTrading = resTrading(ismember(resTrading.Date, tradingDate), :);
 
+% 
+% % @2019.2.15 绝对现货溢价老版本调整
+% res = array2table([resTrading.Date, ...
+%     arrayfun(@(x, y, z) ifelse(isnan(x), NaN, ifelse(x > 1, 1, -1)), table2array(resTrading(:, 2:end)))], ...
+%     'VariableNames', resTrading.Properties.VariableNames);
+% res = array2table([res.Date, ...
+%     arrayfun(@(x, y, z) ifelse(isnan(x), 0, x), table2array(res(:, 2:end)))], ...
+%     'VariableNames', res.Properties.VariableNames);
+% % 这样直接改成绝对信号为什么效果会差很多？
 
 % resTrading作为参数输入getholdingdirect.m得到换仓日的持仓方向结果
 res = getholdingdirect(resTrading);
 
-% 
-% % 现货溢价筛选
-% res = premiumSelect(res);
+
 
 % % 
 % % 因子绝对值筛选

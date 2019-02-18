@@ -14,8 +14,10 @@ factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
 % fNameUniverse = {'SpotPremiumV1', 'SpotPremiumV2', 'SpotPremiumV3', 'SpotPremiumV4'};
-% finalRes = num2cell(nan(13, length(fNameUniverse) + 1));
-% for iFactor = 1:4
+
+pctUniverse = [0.25, 0.4];
+finalRes = num2cell(nan(13, length(pctUniverse) + 1));
+for iPct = 1:length(pctUniverse)
 
 % factorName = fNameUniverse{iFactor};
 factorName = 'SpotPremiumV4';
@@ -28,7 +30,7 @@ factorPara.priceType = 'Close';  % 海通和华泰都是复权收盘发信号，主力结算交易
 holdingTime = 50;
 
 tradingPara.groupNum = 3; % 对冲比例10%，20%对应5组
-tradingPara.pct = 0.5; % 高波动率筛选的标准，剔除百分位pctATR以下的
+tradingPara.pct = pctUniverse(iPct); % 高波动率筛选的标准，剔除百分位pctATR以下的
 tradingPara.capital = 1e8;
 tradingPara.direct = 1;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
@@ -216,13 +218,13 @@ for kHolding = 1:length(holdingTime)
     
 end
 
-% if iFactor == 1
-%     finalRes(:, [1 2]) = bcktstAnalysis;
-% else
-%     finalRes(:, iFactor + 1) = ...
-%         bcktstAnalysis(:, 2);
-% end
-% end
+if iPct == 1
+    finalRes(:, [1 2]) = bcktstAnalysis;
+else
+    finalRes(:, iPct + 1) = ...
+        bcktstAnalysis(:, 2);
+end
+end
 
 
 %
