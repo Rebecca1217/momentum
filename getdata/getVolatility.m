@@ -1,7 +1,6 @@
 function res = getVolatility(win, pct, dateFrom, dateTo, type)
 %GETVOLATILITY win是计算波动率的时间窗口，和动量因子窗口一致，pct是筛选的百分位点，从低到高排列
 % 比如pct = 0.25表示，剔除波动率从低到高排在前25%的（标签为0）
-% atr数据是从漫雪TableData直接读的，固定win = 14，所以函数先不设置win参数
 
 tradingDay = gettradingday(dateFrom, dateTo);
 

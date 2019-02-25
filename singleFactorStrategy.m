@@ -13,26 +13,36 @@ dataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData';
 factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
-% fNameUniverse = {'SpotPremiumV1', 'SpotPremiumV2', 'SpotPremiumV3', 'SpotPremiumV4'};
+fNameUniverse = {'warrantSmooth90', 'warrantSmooth250'};
 
-pctUniverse = [0.25, 0.4];
-finalRes = num2cell(nan(13, length(pctUniverse) + 1));
-for iPct = 1:length(pctUniverse)
+% pctUniverse = [0.25, 0.4, 0.5];
+% volWin = [60 65 70 75 80 85 90];
+% gNumUniverse = [2 3 5];
+% dateUniverse = {[20100101, 20181231]};
+% dateUniverse = {[20100101, 20101231], [20110101, 20112231], [20120101, 20121231], [20130101, 20131231], ...
+%     [20140101, 20141231], [20150101, 20151231], [20160101, 20161231], [20170101, 20171231], [20180101, 20181231]};
+holdingUniverse = [10, 30];
 
-% factorName = fNameUniverse{iFactor};
-factorName = 'SpotPremiumV4';
+finalRes = num2cell(nan(13, length(holdingUniverse) * length(fNameUniverse) + 1));
+for jFactor = 1:length(fNameUniverse)
+for iHolding = 1:length(holdingUniverse)
+
+
+factorName = fNameUniverse{jFactor};
+% factorName = 'warrant250';
 % 因子本身参数在这里已无需设置了，这里的参数只是策略上的参数，如持仓时间
 % factorPara.dataPath = [dataPath, '\主力合约-比例后复权']; % 计算因子（收益率）用复权数据
 factorPara.lotsDataPath = [dataPath, '\主力合约']; % 计算手数需要用主力合约，不复权
 factorPara.dateFrom = 20100101;
 factorPara.dateTo = 20181231;
 factorPara.priceType = 'Close';  % 海通和华泰都是复权收盘发信号，主力结算交易
-holdingTime = 50;
+holdingTime = holdingUniverse(iHolding);
 
 tradingPara.groupNum = 3; % 对冲比例10%，20%对应5组
-tradingPara.pct = pctUniverse(iPct); % 高波动率筛选的标准，剔除百分位pctATR以下的
+tradingPara.pct = 0.5; % 高波动率筛选的标准，剔除百分位pctATR以下的
 tradingPara.capital = 1e8;
-tradingPara.direct = 1;
+tradingPara.direct = -1; % 这里用的是factorDataTT本身，和factorTest里面用的factorRankTT不一样（Rank已经调整过顺序）
+tradingPara.volWin = 90;
 % tradePara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
 tradingPara.futMainContPath = '\\Cj-lmxue-dt\期货数据2.0\商品期货主力合约代码';
 tradingPara.futDataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData\主力合约'; %期货主力合约数据路径
@@ -80,8 +90,10 @@ for kHolding = 1:length(holdingTime)
     % 因子数据筛选：第二：流动性
     %     每次循环的liquidityInfo时间不一样，与factorData的时间保持一致
     %         load('E:\futureData\liquidityInfo.mat')
-    load('E:\futureData\liquidityInfoHuatai.mat')
-    liquidityInfo = liquidityInfoHuatai;
+    % @2019.02.21 原始的liquidityInfo是从漫雪之前保存的数据直接读的，以后都不用这个了，全改为每次自己生成判断
+    % 漫雪现在也是每次现判断
+    load('E:\futureData\liquidityInfoHuatai2.mat')
+    liquidityInfo = liquidityInfoHuatai2;
     liquidityInfo = liquidityInfo(...
         liquidityInfo.Date >= min(factorData.Date) &...
         liquidityInfo.Date <= max(factorData.Date), :);
@@ -90,21 +102,35 @@ for kHolding = 1:length(holdingTime)
     liquidityInfo = delStockBondIdx(liquidityInfo); %% 这一步其实不用，因为Huatai版本已经剔除了股指和国债期货
     liquidityInfo = table2array(liquidityInfo(:, 2:end));
     
-    %     liquidityInfo = getBasicData('future');
-    %     avgVol = movavg(liquidityInfo.Volume, 'simple', 20);
-    %     nanL = NanL_from_chgCode(liquidityInfo.ContCode, 19);
-    %     avgVol(nanL) = 0;
-    %     avgVol(isnan(avgVol)) = 0;
-    %
-    %     liquidityInfo.LiqStatus = ones(height(liquidityInfo), 1);
-    %     liquidityInfo.LiqStatus(avgVol < 10000) = 0;
-    %     liquidityInfo = liquidityInfo(liquidityInfo.Date >= factorData.Date(1) & ...
-    %         liquidityInfo.Date <= factorData.Date(end), {'Date', 'ContName', 'LiqStatus'});
-    %     liquidityInfo.ContName = cellfun(@char, liquidityInfo.ContName, 'UniformOutput', false);
-    %     liquidityInfo = unstack(liquidityInfo, 'LiqStatus', 'ContName');
-    %     liquidityInfo = delStockBondIdx(liquidityInfo);
-    %     liquidityInfo = table2array(liquidityInfo(:, 2:end));
     
+    % 仓单数据是否为0值
+    load('E:\futureData\dataWarrant.mat')
+    dataWarrant = outerjoin(dataWarrant, codeName, 'type', 'left', 'MergeKeys', true, ...
+        'LeftKeys', 'ContCode', 'RightKeys', 'ContCode');
+    dataWarrant.ContName = cellfun(@char, dataWarrant.ContName, 'UniformOutput', false);
+    dataWarrant = unstack(dataWarrant(:, {'Date', 'ContName', 'Warrant'}), 'Warrant', 'ContName');
+    dataWarrant = delStockBondIdx(dataWarrant);
+    dataWarrant = dataWarrant(dataWarrant.Date >= factorData.Date(1) & ...
+        dataWarrant.Date <= factorData.Date(end), :);
+    warrantLabel = arrayfun(@(x, y, z) ifelse(isnan(x), NaN, ifelse(x == 0, NaN, 1)), table2array(dataWarrant(:, 2:end)));
+    clear dataWarrant
+    % 仓单因子可选择的品种保留1，其他设为NaN
+    
+%         liquidityInfo = getBasicData('future');
+%         avgVol = movavg(liquidityInfo.Volume, 'simple', 20);
+%         nanL = NanL_from_chgCode(liquidityInfo.ContCode, 19);
+%         avgVol(nanL) = 0;
+%         avgVol(isnan(avgVol)) = 0;
+%     
+%         liquidityInfo.LiqStatus = ones(height(liquidityInfo), 1);
+%         liquidityInfo.LiqStatus(avgVol < 10000) = 0;
+%         liquidityInfo = liquidityInfo(liquidityInfo.Date >= factorData.Date(1) & ...
+%             liquidityInfo.Date <= factorData.Date(end), {'Date', 'ContName', 'LiqStatus'});
+%         liquidityInfo.ContName = cellfun(@char, liquidityInfo.ContName, 'UniformOutput', false);
+%         liquidityInfo = unstack(liquidityInfo, 'LiqStatus', 'ContName');
+%         liquidityInfo = delStockBondIdx(liquidityInfo);
+%         liquidityInfo = table2array(liquidityInfo(:, 2:end));
+%     
     %% 定义回测汇总结果
     totalRes = num2cell(nan(13, tradingPara.passway + 1));
     totalBacktestNV = nan(size(factorData, 1), tradingPara.passway + 1);
@@ -217,21 +243,22 @@ for kHolding = 1:length(holdingTime)
     end
     
 end
-
-if iPct == 1
+% 
+if iHolding == 1 && jFactor == 1
     finalRes(:, [1 2]) = bcktstAnalysis;
 else
-    finalRes(:, iPct + 1) = ...
+    finalRes(:, (jFactor - 1) * length(holdingUniverse) + iHolding + 1) = ...
         bcktstAnalysis(:, 2);
 end
 end
+end
 
 
-%
-% % 新老动量合成作图：
-% 新动量结果保存
-% bctNV = xlsread('C:\Users\fengruiling\Desktop\bctNV.xlsx');
-% bctExp = xlsread('C:\Users\fengruiling\Desktop\bctexp.xlsx');
+% %
+% % % 新老动量合成作图：
+% % 新动量结果保存
+% % bctNV = xlsread('C:\Users\fengruiling\Desktop\bctNV.xlsx');
+% % bctExp = xlsread('C:\Users\fengruiling\Desktop\bctexp.xlsx');
 % % 与老动量结果汇总
 % tst = [bctNV(:, 1), bctNV(:, 2) + totalBacktestResult.nv(:, 2), bctNV(:, 3) + totalBacktestResult.nv(:, 3)];
 % tst2 = [bctNV(:, 1), bctExp(:, 2) + totalBacktestResult.nv(:, 2)];
