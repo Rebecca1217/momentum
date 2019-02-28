@@ -13,7 +13,7 @@ dataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData';
 factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
-fNameUniverse = {'warrantSmooth90', 'warrantSmooth250'};
+fNameUniverse = {'warrant090'};
 
 % pctUniverse = [0.25, 0.4, 0.5];
 % volWin = [60 65 70 75 80 85 90];
@@ -21,7 +21,7 @@ fNameUniverse = {'warrantSmooth90', 'warrantSmooth250'};
 % dateUniverse = {[20100101, 20181231]};
 % dateUniverse = {[20100101, 20101231], [20110101, 20112231], [20120101, 20121231], [20130101, 20131231], ...
 %     [20140101, 20141231], [20150101, 20151231], [20160101, 20161231], [20170101, 20171231], [20180101, 20181231]};
-holdingUniverse = [10, 30];
+holdingUniverse = 30;
 
 finalRes = num2cell(nan(13, length(holdingUniverse) * length(fNameUniverse) + 1));
 for jFactor = 1:length(fNameUniverse)
