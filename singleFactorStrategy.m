@@ -16,16 +16,19 @@ factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 fNameUniverse = {'warrant090'};
 
 % pctUniverse = [0.25, 0.4, 0.5];
-% volWin = [60 65 70 75 80 85 90];
+volWin = 90;
 % gNumUniverse = [2 3 5];
 % dateUniverse = {[20100101, 20181231]};
 % dateUniverse = {[20100101, 20101231], [20110101, 20112231], [20120101, 20121231], [20130101, 20131231], ...
 %     [20140101, 20141231], [20150101, 20151231], [20160101, 20161231], [20170101, 20171231], [20180101, 20181231]};
-holdingUniverse = [5, 10, 20, 30, 60, 90];
+% holdingUniverse = [5, 10, 20, 30, 60, 90];
+% holdingUniverse = [10, 20, 30, 50, 60, 90, 120];
+holdingUniverse = 5;
 
-finalRes = num2cell(nan(13, length(holdingUniverse) * length(fNameUniverse) + 1));
+finalRes = num2cell(nan(13, length(volWin) * length(fNameUniverse) + 1));
+totalResult = cell(1, length(volWin));
 for jFactor = 1:length(fNameUniverse)
-    for iHolding = 1:length(holdingUniverse)
+    for iWin = 1:length(volWin)
         
         
         factorName = fNameUniverse{jFactor};
@@ -34,12 +37,12 @@ for jFactor = 1:length(fNameUniverse)
         % factorPara.dataPath = [dataPath, '\主力合约-比例后复权']; % 计算因子（收益率）用复权数据
         factorPara.lotsDataPath = [dataPath, '\主力合约']; % 计算手数需要用主力合约，不复权
         factorPara.dateFrom = 20100101;
-        factorPara.dateTo = 20181231;
+        factorPara.dateTo = 20181207;
         factorPara.priceType = 'Close';  % 海通和华泰都是复权收盘发信号，主力结算交易
-        holdingTime = holdingUniverse(iHolding);
+        holdingTime = holdingUniverse;
         
         tradingPara.groupNum = 3; % 对冲比例10%，20%对应5组
-        tradingPara.pct = 0.5; % 高波动率筛选的标准，剔除百分位pctATR以下的
+        tradingPara.pct = 0.3; % 高波动率筛选的标准，剔除百分位pctATR以下的
         tradingPara.capital = 1e8;
         tradingPara.direct = 1; % 这里用的是factorDataTT本身，和factorTest里面用的factorRankTT不一样（Rank已经调整过顺序）
         tradingPara.volWin = 90;
@@ -49,8 +52,8 @@ for jFactor = 1:length(fNameUniverse)
         tradingPara.futUnitPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\minTickInfo.mat'; %期货最小变动单位
         tradingPara.futMultiPath = '\\Cj-lmxue-dt\期货数据2.0\usualData\PunitInfo'; %期货合约乘数
         tradingPara.PType = 'open'; %交易价格，一般用open（开盘价）或者avg(日均价）
-        tradingPara.fixC = 0.0002; %固定成本 华泰是单边万五，海通单边万三
-        tradingPara.slip = 2; %滑点 两家券商都不加滑点
+        tradingPara.fixC = 0.0000; %固定成本 华泰是单边万五，海通单边万三
+        tradingPara.slip = 0; %滑点 两家券商都不加滑点
         
         % 等算持仓的时候再剔除非流动性和股指国债期货
         
@@ -159,7 +162,7 @@ for jFactor = 1:length(fNameUniverse)
                 posFullDirect = outerjoin(posFullDirect, posTradingDirect, 'type', 'left', 'MergeKeys', true);
                 posFullDirect = varfun(@(x) fillmissing(x, 'previous'), posFullDirect);
                 posFullDirect.Properties.VariableNames = posTradingDirect.Properties.VariableNames;
-                %                 posFullDirect = posTradingDirect;
+%                                 posFullDirect = posTradingDirect;
                 
                 % posFullDirect全为NaN剔除
                 %         tst = rowfun(@(x) ~all(isnan(x)), posFullDirect(:, 2:end)); % 这个不行
@@ -231,6 +234,7 @@ for jFactor = 1:length(fNameUniverse)
             totalBacktestResult.riskExposure = totalBacktestExposure(:, [1 end]);
             
             totalBacktestAnalysis = CTAAnalysis_GeneralPlatform_2(totalBacktestResult);
+            totalResult{1, jFactor} = totalBacktestResult;
             
             dn = datenum(num2str(totalBacktestResult.nv(:, 1)), 'yyyymmdd');
             plot(dn, (tradingPara.capital + totalBacktestResult.nv(:, 2)) ./ tradingPara.capital, 'DisplayName', '改进老动量')
@@ -245,10 +249,10 @@ for jFactor = 1:length(fNameUniverse)
             
         end
         %
-        if iHolding == 1 && jFactor == 1
+        if iWin == 1 && jFactor == 1
             finalRes(:, [1 2]) = bcktstAnalysis;
         else
-            finalRes(:, (jFactor - 1) * length(holdingUniverse) + iHolding + 1) = ...
+            finalRes(:, (jFactor - 1) * length(volWin) + iWin + 1) = ...
                 bcktstAnalysis(:, 2);
         end
     end
