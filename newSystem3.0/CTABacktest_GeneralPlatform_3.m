@@ -19,25 +19,31 @@ if nargin==1
     Cost.float = 0; %滑点
     PType = 'open'; %交易价格
     % 交易数据路径
-    futDataPath = 'D:\期货数据2.0\dlyData\主力合约';
-    futUnitPath = 'D:\期货数据2.0\usualData\minTickInfo.mat';
-    futMultiPath = 'D:\期货数据2.0\usualData\PunitInfo';
+    futDataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData\主力合约';
+%     futUnitPath = 'D:\期货数据2.0\usualData\minTickInfo.mat';
+%     futMultiPath = 'D:\期货数据2.0\usualData\PunitInfo';
 else
     % 路径
     futDataPath = TradePara.futDataPath; %期货数据路径
-    futUnitPath = TradePara.futUnitPath; %期货最小变动单位数据路径
-    futMultiPath = TradePara.futMultiPath; %期货合约乘数数据路径
+%     futUnitPath = TradePara.futUnitPath; %期货最小变动单位数据路径
+%     futMultiPath = TradePara.futMultiPath; %期货合约乘数数据路径
     % 交易
     PType = TradePara.PType; %成交价格类型
     Cost.fix = TradePara.fixC;
     Cost.float = TradePara.slip;
 end
-load(futUnitPath) %最小变动单位数据-minTickInfo
-load([futMultiPath,'\',num2str(TargetPortfolio{end,2}),'.mat']) %合约乘数数据-导入最后一个交易日对应的合约乘数数据
+
+% 获取最小变动单位和合约乘数
+basicData = getBasicData('future');
+minTickInfo = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MiniTick'}));
+infoData = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MultiFactor'}));
+% load(futUnitPath) %最小变动单位数据-minTickInfo
+% load([futMultiPath,'\',num2str(TargetPortfolio{end,2}),'.mat']) %合约乘数数据-导入最后一个交易日对应的合约乘数数据
 
 % 计算调仓日的日期序列
 tradaySeries = cell2mat(TargetPortfolio(:,2)); %目标持仓生成日，交易日
-nextTraday = get_nextTraday(tradaySeries); %目标持仓对应的调仓日
+% nextTraday = get_nextTraday(tradaySeries); %目标持仓对应的调仓日
+nextTraday = getneighbourtdday(tradaySeries, 'next');
 if length(nextTraday)~=length(tradaySeries) %如果调仓日期的数目不等于组合生成日的数目，报错
     fprintf('日期序列有缺失，检查一下dateCalendar！！！\n')
     err = 1;
@@ -61,7 +67,7 @@ for i_fut = 1:length(fut_variety)
     % 要将交易数据、信号数据、持仓数据的起止日期对齐
     % 交易数据
     load([futDataPath,'\',fut,'.mat'])
-    tradeData = getTradeData(futureData,signalDate(1),signalDate(end),PType);
+    tradeData = getTradeData(futureData,signalDate(1),signalDate(end),PType); % 开盘价
     % 信号数据
     sigData = getSigData2(signalMtrx(:,[1,i_fut+1]),tradeData.tdDate);
     % 持仓手数数据

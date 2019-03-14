@@ -12,7 +12,7 @@ function tdList = calRtnByRealData2(sigLi,tradeData,HoldingHandsFut,Cost)
 tdDate = tradeData.tdDate;
 tdData = tradeData.tdData;
 tdAdj = tradeData.tdAdj; %换月的时候旧合约的开盘价数据
-ttData = tradeData.ttData; %主力合约的价格数据，ochls
+ttData = tradeData.ttData; %主力合约的价格数据，ochls % 第5列是结算，第2列是收盘，第1列是开盘
 
 % 交易成本
 fixC = Cost.fix;

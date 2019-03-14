@@ -10,12 +10,18 @@ fullTradingAmount = capital ./ fullTradingNum;
 % load price 
 % 合约手数 = 名义市值 ./ （合约乘数 .* 合约价格） .* posfullDirect
 factorPara = evalin('base', 'factorPara');
-dataPara.path = factorPara.lotsDataPath; % @2019.1.8计算合约手数用不复权 主力收盘价
+% dataPara.path = factorPara.lotsDataPath; % @2019.1.8计算合约手数用不复权 主力收盘价
 dataPara.dateFrom = str2double(datestr(datenum(num2str(factorPara.dateFrom), 'yyyymmdd') - 10, 'yyyymmdd'));
 dataPara.dateTo = factorPara.dateTo;
 dataPara.priceType = factorPara.priceType;
 
-priceData = getpricedata(dataPara);
+
+
+% priceData = getpricedata(dataPara); 最早期的函数，现在不需要用了
+
+% @ 2019.03.13 priceData 只需要获取当天的收盘价就可以，不用再往上多读一天
+basicData = getBasicData('future');
+priceData = unstack(basicData(:, {'Date', 'ContName', 'Close'}), 'Close', 'ContName');
 varNames = priceData.Properties.VariableNames;
 % 这个地方priceData要保留比dateFrom稍往前一点，因为需要上一个交易日的价格来确定调仓日手数
 % 第一天就是调仓日的话，priceData需要保留第一天往前一个交易日的价格信息
@@ -24,14 +30,14 @@ varNames = priceData.Properties.VariableNames;
 % @2019.2.14 这个priceData里面有0，需要往上fill0
 priceData = varfun(@fill0Price, priceData);
 priceData.Properties.VariableNames = varNames;
+priceData = priceData(priceData.Date >= dataPara.dateFrom & ...
+    priceData.Date <= dataPara.dateTo, :);
+priceData = delStockBondIdx(priceData);
 clear varNames
 
-% load 合约乘数 unitInfo 和 liquidInfo一样，每天晚上更新table数据，用的时候load就可以了
-load('E:\futureData\unitInfo.mat')
+unitInfo = unstack(basicData(:, {'Date', 'MultiFactor', 'ContName'}), 'MultiFactor', 'ContName');
 unitInfo = unitInfo(unitInfo.Date >= min(posFullDirect.Date) & ...
     unitInfo.Date <= max(posFullDirect.Date), :);
-
-% unitInfo和liquidityInfo一样，都需要剔除股指期货和国债期货
 unitInfo = delStockBondIdx(unitInfo);
 
 % get raw hands
@@ -64,9 +70,13 @@ hands = round(...
 totalDate = posFullDirect(:, 1);
 hands = array2table([posTradingDirect.Date hands], ...
     'VariableNames', posTradingDirect.Properties.VariableNames);
-fullHands = outerjoin(hands, totalDate, 'MergeKeys', true);
-fullHands = varfun(@fillnan, fullHands);
-fullHands.Properties.VariableNames = posFullDirect.Properties.VariableNames;
+fullHands = outerjoin(totalDate, hands, 'type', 'left', 'MergeKeys', true);
+% fullHands = outerjoin(hands, totalDate, 'MergeKeys', true);
+fullHands = varfun(@(x,y){fillmissing(x, 'previous')}, fullHands);
+% @2019.03.12? fillmissing完了会把bouble变为cell  why?
+
+fullHands = array2table(cell2mat(table2array(fullHands)), ...
+    'VariableNames', posFullDirect.Properties.VariableNames);
 holdingInfo.fullHands = fullHands;
 
 
