@@ -35,10 +35,19 @@ end
 
 % 获取最小变动单位和合约乘数
 basicData = getBasicData('future');
-minTickInfo = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MiniTick'}));
-infoData = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MultiFactor'}));
+
+% @2019.03.18这个minTickInfo和infoData需要换成每天自己的
+% minTickInfo = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MiniTick'}));
+% infoData = table2cell(basicData(basicData.Date == TargetPortfolio{end,2}, {'ContName', 'MultiFactor'}));
 % load(futUnitPath) %最小变动单位数据-minTickInfo
 % load([futMultiPath,'\',num2str(TargetPortfolio{end,2}),'.mat']) %合约乘数数据-导入最后一个交易日对应的合约乘数数据
+
+
+minTickInfo = basicData(:, {'Date', 'ContName', 'MiniTick'});
+minTickInfo = minTickInfo(minTickInfo.Date >= TargetPortfolio{1, 2} & minTickInfo.Date <= TargetPortfolio{end, 2}, :);
+
+infoData = basicData(:, {'Date', 'ContName', 'MultiFactor'});
+infoData = infoData(infoData.Date >= TargetPortfolio{1, 2} & infoData.Date <= TargetPortfolio{end, 2}, :);
 
 % 计算调仓日的日期序列
 tradaySeries = cell2mat(TargetPortfolio(:,2)); %目标持仓生成日，交易日
@@ -61,8 +70,23 @@ riskExposure = zeros(length(signalDate),2); %风险敞口序列，日期、不轧差的敞口
 riskExposure(:,1) = signalDate;
 for i_fut = 1:length(fut_variety)
     fut = fut_variety{i_fut};
-    Cost.unit = minTickInfo{ismember(minTickInfo(:,1),fut),2};
-    Cost.multi = infoData{ismember(infoData(:,1),fut),2};
+   
+    costUnit = minTickInfo(strcmp(minTickInfo.ContName, fut), [1, 3]);
+    costUnit = outerjoin(array2table(tradaySeries, 'VariableNames', {'Date'}), costUnit, ...
+        'type', 'left', 'MergeKeys', true, 'Keys', 'Date');
+    % 先不补NaN试试？ 不补不行，会导致前面有FU的信号没平仓的话，到2018年6月27净值断崖下跌
+    costUnit = fillmissing(costUnit, 'previous');
+    Cost.unit = costUnit;
+   
+    costMulti = infoData(strcmp(infoData.ContName, fut), [1, 3]);
+    costMulti = outerjoin(array2table(tradaySeries, 'VariableNames', {'Date'}), costMulti, ...
+        'type', 'left', 'MergeKeys', true, 'Keys', 'Date');
+    costMulti = fillmissing(costMulti, 'previous');
+    Cost.multi = costMulti;
+    clear costUnit costMulti
+    % 这个地方需要把时间维度补全，不然跑不通
+   
+    
     % 生成所需格式的数据
     % 要将交易数据、信号数据、持仓数据的起止日期对齐
     % 交易数据

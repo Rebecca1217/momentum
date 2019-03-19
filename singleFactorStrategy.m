@@ -13,7 +13,7 @@ addpath getdata factorFunction getholding newSystem3.0 newSystem3.0\gen_for_BT2 
 factorDataPath = 'E:\Repository\factorTest\factorDataTT.mat';
 
 %% 读取因子
-fNameUniverse = {'SpotPremiumV4Lag1'};
+fNameUniverse = {'warrant0250'};
 
 % pctUniverse = [0.25, 0.4, 0.5];
 volWin = 90;% gNumUniverse = [2 3 5];
@@ -22,7 +22,7 @@ volWin = 90;% gNumUniverse = [2 3 5];
 %     [20140101, 20141231], [20150101, 20151231], [20160101, 20161231], [20170101, 20171231], [20180101, 20181231]};
 % holdingUniverse = [5, 10, 20, 30, 60, 90];
 % holdingUniverse = [10, 20, 30, 50, 60, 90, 120];
-holdingUniverse = 50;
+holdingUniverse = 30;
 
 finalRes = num2cell(nan(13, length(holdingUniverse) * length(fNameUniverse) + 1));
 totalResult = cell(1, length(holdingUniverse));
@@ -39,13 +39,14 @@ for jFactor = 1:length(fNameUniverse)
     holdingTime = holdingUniverse;
     
     tradingPara.groupNum = 3; % 对冲比例10%，20%对应5组
-    tradingPara.pct = 0.5; % 高波动率筛选的标准，剔除百分位pctATR以下的
+%     tradingPara.pct = 0.5; % 高波动率筛选的标准，剔除百分位pctATR以下的
     tradingPara.capital = 1e8;
-    tradingPara.direct = 1; % 这里用的是factorDataTT本身，和factorTest里面用的factorRankTT不一样（Rank已经调整过顺序）
-    tradingPara.volWin = 90;
+    tradingPara.direct = -1; % 这里用的是factorDataTT本身，和factorTest里面用的factorRankTT不一样（Rank已经调整过顺序）
+%     tradingPara.volWin = 90;
 
     tradingPara.futMainContPath = '\\CJ-LMXUE-DT\futureData_fromWind\商品期货主力合约代码';
     tradingPara.futDataPath = '\\Cj-lmxue-dt\期货数据2.0\dlyData\主力合约'; %期货主力合约数据路径 这个还在更新，也在用
+    % 旧回测系统还会用到这里的主力合约数据，新的回测系统已经不用了
     tradingPara.PType = 'open'; %交易价格，一般用open（开盘价）或者avg(日均价）
     tradingPara.fixC = 0.0002; %固定成本 华泰是单边万五，海通单边万三
     tradingPara.slip = 2; %滑点 两家券商都不加滑点
@@ -149,7 +150,7 @@ for jFactor = 1:length(fNameUniverse)
             passway = jPassway;
             
             posTradingDirect = getholding(passway, tradingPara); %得到iWin和jPassway下的换仓日序列持仓方向
-            
+
             %                 % 只看多头，把-1 都改为0
             %                 posTradingDirect = array2table(...
             %                     arrayfun(@(x, y, z) ifelse(x == 1, 0, x), table2array(posTradingDirect)), ...

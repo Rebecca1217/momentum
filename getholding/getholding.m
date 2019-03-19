@@ -25,16 +25,16 @@ res = [factorData.Date, res]; % 流动性品种的每日因子秩
 % % res = res(:, 2:end) .* table2array(volatilityInfo(:, 2:end));
 % % res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 % % % 
-% %% @2018.12.28 剔除波动率低的品种（华泰新动量因子）
-% 波动率回溯时长与因子窗口一致
-% win = evalin('base', 'window(iWin)');
-win = tradingPara.volWin;
-pct = evalin('base', 'tradingPara.pct');
-volatilityInfo = getVolatility(win, pct, factorData.Date(1), factorData.Date(end), 'sigma');
-volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatilityInfo(:, 2:end)));
-
-res = res(:, 2:end) .* volatilityInfo;
-res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
+% % %% @2018.12.28 剔除波动率低的品种（华泰新动量因子）
+% % 波动率回溯时长与因子窗口一致
+% % win = evalin('base', 'window(iWin)');
+% win = tradingPara.volWin;
+% pct = evalin('base', 'tradingPara.pct');
+% volatilityInfo = getVolatility(win, pct, factorData.Date(1), factorData.Date(end), 'sigma');
+% volatilityInfo = arrayfun(@(x, y, z) ifelse(x == 0, NaN, x), table2array(volatilityInfo(:, 2:end)));
+% 
+% res = res(:, 2:end) .* volatilityInfo;
+% res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 
 
 % % @ 2019.02.24 剔除仓单数据当天为0的品种
@@ -42,13 +42,22 @@ res = [factorData.Date, res]; % 流动性 & 高波动率品种的每日因子数据
 % res = res(:, 2:end) .* warrantLabel;
 % res = [factorData.Date, res]; % 流动性 & 仓单不为0的品种每日因子数据
 
-
 %% 确定各品种的持仓
 % 所有换仓日 换仓周期40天，通道数40，两层循环（因子窗口，通道数）
 holdingTime = evalin('base', 'tradingPara.holdingTime');
 tradingDate = res(:, 1);
 tradingIndex = ((tradingPara.passwayInterval * (passway - 1)) + 1:holdingTime:size(res, 1));
 tradingDate = tradingDate(tradingIndex);
+
+
+% 如果tradingDate是空值，即这条通道还没有开始，返回0结果
+% 因为外面写的涉及一个join的内容，返回空不行，构造一个此通道之前的全部信号为0的table输出
+if isempty(tradingDate)
+    res = array2table(zeros(height(factorData), width(factorData)), ...
+        'VariableNames', factorData.Properties.VariableNames);
+    res.Date = factorData.Date;
+    return
+end
 
 
 % 换仓日的持仓方向结果
